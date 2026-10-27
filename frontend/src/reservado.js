@@ -224,7 +224,11 @@ function renderSong(m) {
       <button class="back" data-back>← Todas as músicas</button>
       ${songTools(m)}
     </div>
-    <h2 class="song-title">${esc(m.titulo)}</h2>
+    <div class="song-heading">
+      <h2 class="song-title">${esc(m.titulo)}</h2>
+      ${m.letra ? `<button class="btn primary letra-btn" data-letra="${m.id}">Letra</button>`
+        : state.manage ? `<button class="btn letra-btn" data-edit="musicas" data-id="${m.id}">+ Adicionar letra</button>` : ''}
+    </div>
     ${m.notas ? `<p class="song-notes">${esc(m.notas)}</p>` : ''}
     ${naipes.length ? `<div class="bar" role="group" aria-label="Naipe">${naipes.map(n =>
       `<button class="pill big" data-naipe="${esc(n)}" aria-pressed="${n === state.naipe}">${esc(n)}</button>`).join('')}</div>` : ''}
@@ -233,9 +237,18 @@ function renderSong(m) {
       <section class="panel"><h3>Ouvir</h3>${gravacao}</section>
     </div>
     ${extra ? `<details class="panel more"><summary>Outros ficheiros <small>${others.length}</small></summary><ul class="files">${extra}</ul></details>` : ''}
-    ${m.letra ? `<details class="panel more letra"><summary>Letra</summary><div>${esc(m.letra)}</div></details>` : ''}
     ${state.manage ? `<label class="upload"><input type="file" multiple data-upload="${m.id}">+ Adicionar ficheiros (partituras em PDF, áudio…)</label>` : ''}`;
 }
+
+function openLetra(id) {
+  const m = state.musicas.find(x => x.id === id);
+  if (!m?.letra) return;
+  $('#letraTitle').textContent = m.titulo;
+  $('#letraText').textContent = m.letra;
+  $('#letraDlg').showModal();
+}
+$('#letraClose').addEventListener('click', () => $('#letraDlg').close());
+$('#letraDlg').addEventListener('click', e => { if (e.target.id === 'letraDlg') $('#letraDlg').close(); });
 
 function openSong(id) {
   state.sel = id; state.naipe = null; state.pdf = 0;
@@ -372,6 +385,7 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button');
   if (!t) return;
   if (t.dataset.song) openSong(Number(t.dataset.song));
+  else if (t.dataset.letra) openLetra(Number(t.dataset.letra));
   else if (t.dataset.back !== undefined) openSong(null);
   else if (t.dataset.naipe) { state.naipe = t.dataset.naipe; state.pdf = 0; renderSongs(); }
   else if (t.dataset.pdf) { state.pdf = Number(t.dataset.pdf); renderSongs(); }
