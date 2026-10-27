@@ -5,15 +5,14 @@
 //  caloira     vê a área reservada
 // As permissões verdadeiras estão na base de dados (supabase/migracoes/007_area_reservada.sql);
 // aqui só se decide o que mostrar.
+// Entra-se com um nome de utilizador. O Supabase exige um email por conta, por isso cada
+// utilizador tem um email interno <utilizador>@tufeisep.local, que ninguém precisa de conhecer.
 import { sb } from './supabase.js';
 import { api } from './api.js';
 
-export const USERS = [
-  { id: 'admin',      label: 'Administração',   email: import.meta.env.VITE_EDITOR_EMAIL },
-  { id: 'dirmusical', label: 'Direção musical', email: 'tufeisep+dirmusical@gmail.com' },
-  { id: 'tunantes',   label: 'Tunantes',        email: 'tufeisep+tunantes@gmail.com' },
-  { id: 'caloiras',   label: 'Caloiras',        email: 'tufeisep+caloiras@gmail.com' },
-];
+const INTERNAL_DOMAIN = 'tufeisep.local';
+const toEmail = user => `${user.trim().toLowerCase()}@${INTERNAL_DOMAIN}`;
+
 export const ROLE_LABEL = { admin: 'Administração', dirmusical: 'Direção musical', tunante: 'Tunantes', caloira: 'Caloiras' };
 export const hasReservedArea = Boolean(sb);
 export const canManageMusic = role => role === 'admin' || role === 'dirmusical';
@@ -29,15 +28,15 @@ export async function getRole() {
   return (cachedRole = error ? null : data);
 }
 
-export async function signIn(userId, password) {
+export async function signIn(username, password) {
   cachedRole = undefined;
   if (!sb) {
     // Backend próprio: só existe a conta de edição.
     await api.login(password);
     return 'admin';
   }
-  const user = USERS.find(u => u.id === userId);
-  const { error } = await sb.auth.signInWithPassword({ email: user?.email || '', password });
+  if (!/^[a-z0-9._-]+$/i.test(username.trim())) throw new Error('Escreve o teu nome de utilizador, sem espaços.');
+  const { error } = await sb.auth.signInWithPassword({ email: toEmail(username), password });
   if (error) {
     throw new Error(error.status === 429 ? 'Demasiadas tentativas. Tenta outra vez daqui a pouco.' : 'Utilizador ou palavra-passe errados.');
   }
@@ -68,7 +67,7 @@ export function askLogin() {
         <p class="form-intro">Área reservada às tunantes e caloiras da TUFEISEP.</p>
         <div class="field" id="loginUserField">
           <label for="loginUser">Utilizador</label>
-          <select id="loginUser">${USERS.map(u => `<option value="${u.id}">${u.label}</option>`).join('')}</select>
+          <input id="loginUser" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
         </div>
         <div class="field">
           <label for="loginPass">Palavra-passe</label>

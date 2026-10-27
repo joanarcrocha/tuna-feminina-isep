@@ -56,16 +56,16 @@ E corra `npm run dev -w frontend`. Sem este ficheiro, o site usa o backend Expre
 
 ## Área reservada e contas
 
-Há quatro contas, cada uma com um papel:
+Há quatro contas, cada uma com um papel. No site entra-se com o nome de utilizador; o Supabase exige um email por conta, por isso cada uma tem um email interno `<utilizador>@tufeisep.local`, que não existe nem recebe emails.
 
-| Utilizador no site | Email da conta no Supabase | Pode |
+| Utilizador no site | Email interno no Supabase | Pode |
 | --- | --- | --- |
-| Administração | o `EDITOR_EMAIL` (jr@joanarocha.com) | editar todo o site e gerir o repertório |
-| Direção musical | tufeisep+dirmusical@gmail.com | gerir o repertório (músicas, ficheiros, ligações) |
-| Tunantes | tufeisep+tunantes@gmail.com | ver a área reservada |
-| Caloiras | tufeisep+caloiras@gmail.com | ver a área reservada |
+| `admin` | admin@tufeisep.local | editar todo o site e gerir o repertório |
+| `dirmusical` | dirmusical@tufeisep.local | gerir o repertório (músicas, ficheiros, ligações) |
+| `tunantes` | tunantes@tufeisep.local | ver a área reservada |
+| `caloiras` | caloiras@tufeisep.local | ver a área reservada |
 
-1. Em **Authentication > Users > Add user**, crie as três contas novas com **Auto Confirm User**.
+1. Em **Authentication > Users > Add user > Create new user**, crie as quatro contas com **Auto Confirm User**. Como os emails não existem, as palavras-passe não se recuperam por email: trocam-se sempre no painel.
 2. Corra `supabase/migracoes/007_area_reservada.sql` no **SQL Editor**.
 3. Para trocar uma palavra-passe, use **Authentication > Users**, nos três pontos ao lado da conta.
 

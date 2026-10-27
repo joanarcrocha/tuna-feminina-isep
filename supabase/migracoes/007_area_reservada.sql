@@ -1,8 +1,11 @@
 -- Área reservada: contas com papéis, repertório musical e ficheiros privados.
--- Corra uma vez em Supabase > SQL Editor, DEPOIS de criar as contas em Authentication > Users.
+-- Corra uma vez em Supabase > SQL Editor, DEPOIS de criar as contas em Authentication > Users:
+-- admin@tufeisep.local, dirmusical@tufeisep.local, tunantes@tufeisep.local, caloiras@tufeisep.local
 
 -- ---------- Papéis ----------
 -- admin: edita tudo · dirmusical: gere o repertório · tunante e caloira: só veem a área reservada.
+-- No site entra-se com um nome de utilizador. O Supabase exige um email por conta, por isso cada
+-- utilizador tem um email interno <utilizador>@tufeisep.local, que não existe nem recebe emails.
 create table if not exists perfis (
   email  text primary key,
   papel  text not null check (papel in ('admin', 'dirmusical', 'tunante', 'caloira'))
@@ -10,10 +13,10 @@ create table if not exists perfis (
 alter table perfis enable row level security;  -- sem políticas: invisível para o site
 
 insert into perfis (email, papel) values
-  ('jr@joanarocha.com',              'admin'),
-  ('tufeisep+dirmusical@gmail.com',  'dirmusical'),
-  ('tufeisep+tunantes@gmail.com',    'tunante'),
-  ('tufeisep+caloiras@gmail.com',    'caloira')
+  ('admin@tufeisep.local',       'admin'),
+  ('dirmusical@tufeisep.local',  'dirmusical'),
+  ('tunantes@tufeisep.local',    'tunante'),
+  ('caloiras@tufeisep.local',    'caloira')
 on conflict (email) do update set papel = excluded.papel;
 
 create or replace function meu_papel() returns text
