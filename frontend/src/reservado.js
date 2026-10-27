@@ -193,6 +193,7 @@ function fileItem(f) {
         ${state.manage ? `<button class="tool danger" data-delfile="${f.id}">Apagar</button>` : ''}
       </div>
       ${audio && url ? `<audio controls preload="none" src="${esc(url)}"></audio>` : ''}
+      ${f.caminho && f.tipo === 'video/mp4' && url ? `<video controls preload="none" playsinline src="${esc(url)}"></video>` : ''}
     </li>`;
 }
 

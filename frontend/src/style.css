@@ -338,3 +338,4 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .file-group summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
 .file-group summary small { color: var(--muted); font-weight: 500; margin-left: 4px; }
 .file-group .files { margin-top: 8px; }
+.file video { width: 100%; max-height: 360px; border-radius: 8px; background: #000; }
