@@ -6,3 +6,4 @@ backend/data/
 .DS_Store
 .env.local
 *.local
+scripts/plano-importacao.json

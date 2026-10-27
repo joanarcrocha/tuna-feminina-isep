@@ -334,3 +334,7 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .upload { display: inline-flex; justify-self: start; align-items: center; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; padding: 6px 0; }
 .upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.file-group { border-top: 1px solid var(--line); padding-top: 8px; }
+.file-group summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
+.file-group summary small { color: var(--muted); font-weight: 500; margin-left: 4px; }
+.file-group .files { margin-top: 8px; }

@@ -87,7 +87,7 @@ async function load() {
     state.ficheiros = check(f);
     state.ligacoes = check(l);
     state.urls = {};
-    const paths = state.ficheiros.map(x => x.caminho);
+    const paths = state.ficheiros.map(x => x.caminho).filter(Boolean);
     if (paths.length) {
       const { data } = await sb.storage.from(BUCKET).createSignedUrls(paths, 3600);
       for (const d of data || []) if (d.signedUrl) state.urls[d.path] = d.signedUrl;
@@ -155,23 +155,41 @@ function songCard(m) {
           <button class="tool danger" data-del="musicas" data-id="${m.id}">Apagar</button></div>` : ''}
       </div>
       ${m.notas ? `<p class="song-notes">${esc(m.notas)}</p>` : ''}
-      ${files.length ? `<ul class="files">${files.map(fileItem).join('')}</ul>` : `<p class="muted">Ainda sem ficheiros.</p>`}
-      ${m.link && isUrl(m.link) ? `<a class="song-link" href="${esc(m.link)}" target="_blank" rel="noopener">Abrir ligação <span aria-hidden="true">↗</span></a>` : ''}
+      ${files.length ? fileGroups(files) : `<p class="muted">Ainda sem ficheiros.</p>`}
+      ${m.link && isUrl(m.link) ? `<a class="song-link" href="${esc(m.link)}" target="_blank" rel="noopener">${m.link.includes('drive.google.com') ? 'Abrir a pasta no Drive' : 'Abrir ligação'} <span aria-hidden="true">↗</span></a>` : ''}
       ${m.letra ? `<details class="letra"><summary>Letra</summary><div>${esc(m.letra)}</div></details>` : ''}
       ${state.manage ? `<label class="upload"><input type="file" multiple data-upload="${m.id}">+ Adicionar ficheiros</label>` : ''}
     </article>`;
 }
 
+// Ficheiros agrupados pela pasta de origem (por exemplo "Vozes · Sopranos").
+// Com muitos ficheiros, cada grupo abre e fecha para o cartão não ficar enorme.
+function fileGroups(files) {
+  const groups = new Map();
+  for (const f of [...files].sort((a, b) => String(a.grupo || '').localeCompare(String(b.grupo || ''), 'pt') || a.nome.localeCompare(b.nome, 'pt'))) {
+    const g = f.grupo || 'Geral';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(f);
+  }
+  if (groups.size === 1 && files.length <= 6) return `<ul class="files">${files.map(fileItem).join('')}</ul>`;
+  return [...groups].map(([g, fs]) => `
+    <details class="file-group"${files.length <= 6 ? ' open' : ''}>
+      <summary>${esc(g)} <small>${fs.length}</small></summary>
+      <ul class="files">${fs.map(fileItem).join('')}</ul>
+    </details>`).join('');
+}
+
 function fileItem(f) {
-  const url = state.urls[f.caminho];
-  const audio = (f.tipo || '').startsWith('audio/');
+  // Copiado para o site (ligação temporária) ou deixado no Drive (ligação fixa).
+  const url = f.caminho ? state.urls[f.caminho] : f.url;
+  const audio = f.caminho && (f.tipo || '').startsWith('audio/');
   return `
     <li class="file">
       <div class="file-row">
         <span class="file-kind">${kindOf(f)}</span>
         <span class="file-name" title="${esc(f.nome)}">${esc(f.nome)}</span>
         <span class="file-size">${fmtSize(f.tamanho)}</span>
-        ${url ? `<a class="tool" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a>` : ''}
+        ${url ? `<a class="tool" href="${esc(url)}" target="_blank" rel="noopener">${f.caminho ? 'Abrir' : 'Drive ↗'}</a>` : ''}
         ${state.manage ? `<button class="tool danger" data-delfile="${f.id}">Apagar</button>` : ''}
       </div>
       ${audio && url ? `<audio controls preload="none" src="${esc(url)}"></audio>` : ''}
@@ -264,7 +282,7 @@ function armed(btn) {
 async function removeRecord(kind, id) {
   try {
     if (kind === 'musicas') {
-      const paths = state.ficheiros.filter(f => f.musica_id === id).map(f => f.caminho);
+      const paths = state.ficheiros.filter(f => f.musica_id === id).map(f => f.caminho).filter(Boolean);
       if (paths.length) await sb.storage.from(BUCKET).remove(paths);
     }
     const { count, error } = await sb.from(kind).delete({ count: 'exact' }).eq('id', id);
@@ -281,8 +299,10 @@ async function removeFile(id) {
   const f = state.ficheiros.find(x => x.id === id);
   if (!f) return;
   try {
-    const { error } = await sb.storage.from(BUCKET).remove([f.caminho]);
-    if (error) throw new Error('Não foi possível apagar o ficheiro.');
+    if (f.caminho) {
+      const { error } = await sb.storage.from(BUCKET).remove([f.caminho]);
+      if (error) throw new Error('Não foi possível apagar o ficheiro.');
+    }
     check(await sb.from('musica_ficheiros').delete().eq('id', id));
     toast('Ficheiro apagado');
   } catch (ex) {
