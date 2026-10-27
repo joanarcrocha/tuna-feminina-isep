@@ -59,8 +59,15 @@ const driveId = u => (String(u || '').match(/\/d\/([\w-]+)|[?&]id=([\w-]+)/) || 
 const isPdf = f => f.tipo === 'application/pdf' || /\.pdf$/i.test(f.nome || '');
 // O naipe é a última pasta do Drive (por exemplo "Vozes · Sopranos" -> "Sopranos").
 const naipeOf = f => (f.grupo || 'Geral').split(' · ').pop();
-const NAIPE_ORDEM = [/sopran/i, /mezz/i, /contralt/i];
-const naipeRank = n => { const i = NAIPE_ORDEM.findIndex(r => r.test(n)); return i < 0 ? NAIPE_ORDEM.length : i; };
+// Ordem dos naipes: Guitarra primeiro (é o que abre por defeito), depois as vozes e os restantes, e no fim Bandeira e Pandeiretas.
+const NAIPE_ORDEM = [/guitarr/i, /sopran/i, /mezz/i, /contralt/i];
+const NAIPE_FIM = [/bandeira/i, /pandeireta/i];
+const naipeRank = n => {
+  const fim = NAIPE_FIM.findIndex(r => r.test(n));
+  if (fim >= 0) return 100 + fim;
+  const i = NAIPE_ORDEM.findIndex(r => r.test(n));
+  return i < 0 ? NAIPE_ORDEM.length : i;
+};
 const fileHref = f => f.caminho ? state.urls[f.caminho] : f.url;
 // PDF no site (ligação temporária) ou pré-visualização do Drive.
 const pdfSrc = f => f.caminho ? state.urls[f.caminho] : (driveId(f.url) ? `https://drive.google.com/file/d/${driveId(f.url)}/preview` : null);
