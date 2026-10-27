@@ -201,7 +201,17 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb-facts div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .mb-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .mb-facts dd { margin: 0; font-size: 14px; font-weight: 500; }
-.members.compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+.members.compact { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.ger-card { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 28px); }
+.ger-card.novo { animation: ger-in .8s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes ger-in { from { opacity: 0; transform: translateY(36px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ger-card.novo { animation: none; } }
+.ger-card .ger-title { margin: 0 0 16px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ger-title small { font-family: var(--body); font-style: normal; font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.ger-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+.ger-card .mb.compact { background: var(--bg); box-shadow: none; }
+.ger-more { display: grid; justify-items: center; padding: 8px 0 4px; }
+.ger-more .btn small { opacity: .6; margin-left: 6px; }
 .mb.compact { grid-template-rows: 1fr; border-radius: 14px; }
 .mb.compact:hover { transform: none; }
 .mb.compact .mb-body { padding: 14px 16px; gap: 8px; }

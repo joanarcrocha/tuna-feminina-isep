@@ -46,7 +46,7 @@ const SCHEMAS = {
 const KINDS = ['carrossel', 'membros', 'festivais'];
 
 const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
-const state = { festLimite: FEST_PASSO, info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -182,7 +182,10 @@ async function moveMember(id, dir) {
   }
 }
 
+let gerObserver = null, ultimoFiltro = null;
 function renderMembros() {
+  gerObserver?.disconnect();
+  if (state.mFiltro !== ultimoFiltro) { ultimoFiltro = state.mFiltro; state.gerVistas = 1; }
   // Tunantes Inativas: cartões pequenos, sem fotografia.
   $('#members').classList.toggle('compact', state.mFiltro === INATIVA);
   const counts = { Todas: state.membros.filter(daTuna).length };
@@ -218,15 +221,45 @@ function renderMembros() {
         ${tools('membros', m.id, porGeracao ? '' : moveTools(m, i, list))}
       </div>
     </article>`;
-  const grupos = () => {
-    let atual, html = '';
-    list.forEach((m, i) => {
-      if (i === 0 || (m.geracao || 0) !== atual) { atual = m.geracao || 0; html += `<h3 class="ger-title">${m.geracao ? `Geração ${fmtGeracao(m.geracao)}` : 'Sem geração'}</h3>`; }
-      html += card(m, i);
-    });
-    return html;
+  // Cada geração é um cartão. Aparece uma de cada vez: a seguinte surge, com animação, quando se desce até ao fim
+  // (ou se carrega em "Próxima geração"), para a secção não ficar enorme. Com pesquisa ativa mostram-se todas.
+  const gruposGer = [];
+  if (porGeracao) list.forEach(m => {
+    const g = m.geracao || 0;
+    let x = gruposGer.at(-1);
+    if (!x || x.g !== g) gruposGer.push(x = { g, ms: [] });
+    x.ms.push(m);
+  });
+  const cartaoGer = ({ g, ms }, novo) => `
+    <section class="ger-card${novo ? ' novo' : ''}">
+      <h3 class="ger-title">${g ? `Geração ${fmtGeracao(g)}` : 'Sem geração'}<small>${ms.length} ${ms.length === 1 ? 'tunante' : 'tunantes'}</small></h3>
+      <div class="ger-grid">${ms.map(m => card(m, 0)).join('')}</div>
+    </section>`;
+  const mostrarGeracoes = () => {
+    const box = $('#members');
+    const todas = Boolean(q);
+    const n = todas ? gruposGer.length : Math.min(Math.max(state.gerVistas, 1), gruposGer.length);
+    box.innerHTML = gruposGer.slice(0, n).map(g => cartaoGer(g)).join('') +
+      (n < gruposGer.length ? `<div class="ger-more" id="gerMore"><button class="btn" data-ger-next>Próxima geração <small>${gruposGer.length - n} por ver</small></button></div>` : '');
+    const mais = $('#gerMore');
+    if (!mais) return;
+    const seguinte = () => {
+      if (state.gerVistas >= gruposGer.length) return;
+      gerObserver?.disconnect();
+      state.gerVistas++;
+      mais.insertAdjacentHTML('beforebegin', cartaoGer(gruposGer[state.gerVistas - 1], true));
+      if (state.gerVistas >= gruposGer.length) mais.remove();
+      else {
+        mais.querySelector('small').textContent = `${gruposGer.length - state.gerVistas} por ver`;
+        gerObserver.observe(mais);
+      }
+    };
+    mais.querySelector('button').addEventListener('click', seguinte);
+    gerObserver = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) seguinte(); }, { rootMargin: '0px 0px -10% 0px' });
+    gerObserver.observe(mais);
   };
-  $('#members').innerHTML = list.length ? (porGeracao ? grupos() : list.map(card).join(''))
+  if (porGeracao && list.length) { mostrarGeracoes(); return; }
+  $('#members').innerHTML = list.length ? list.map(card).join('')
     : `<div class="empty" style="grid-column:1/-1"><strong>${state.membros.length ? 'Ninguém corresponde a este filtro.' : 'Ainda não há membros no arquivo.'}</strong>${state.membros.length ? 'Experimente outra hierarquia ou outra pesquisa.' : 'Adicione cada membro com a fotografia, os instrumentos, o naipe e a data de entrada.'}</div>`;
 }
 
