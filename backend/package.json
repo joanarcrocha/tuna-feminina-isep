@@ -1,0 +1,15 @@
+{
+  "name": "backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/server.js",
+    "start": "node --env-file=.env src/server.js",
+    "backup": "node --env-file=.env src/backup.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  }
+}

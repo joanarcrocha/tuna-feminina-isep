@@ -1,0 +1,33 @@
+# Produção: o site e a API no contentor "app", com o Caddy à frente a tratar do domínio e do HTTPS.
+# Configuração no ficheiro .env ao lado deste (ver .env.example).
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no ficheiro .env}
+    volumes:
+      - arquivo:/data       # base de dados e fotografias
+      - backups:/backups    # cópias diárias da base de dados
+
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Defina DOMAIN no ficheiro .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data    # certificados HTTPS
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  arquivo:
+  backups:
+  caddy_data:
+  caddy_config:

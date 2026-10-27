@@ -1,0 +1,14 @@
+# O Caddy pede e renova sozinho o certificado HTTPS para o domínio.
+{$DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 20MB
+	}
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:3001
+}
+
+# www.dominio -> dominio
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

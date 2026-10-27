@@ -1,0 +1,17 @@
+{
+  "name": "tuna-feminina-isep",
+  "private": true,
+  "description": "Site e arquivo da Tuna Feminina do ISEP",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,site -c magenta,cyan \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "start": "npm start -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

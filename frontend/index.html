@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tuna Feminina do ISEP</title>
+  <meta name="description" content="Arquivo da Tuna Feminina do ISEP: história, membros, fotografias e festivais.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Secções">
+  <div class="wrap">
+    <a class="brand" href="#topo">Tuna Feminina <em>do ISEP</em></a>
+    <div class="links">
+      <a href="#historia">História</a>
+      <a href="#membros">Membros</a>
+      <a href="#fotos">Fotos</a>
+      <a href="#festivais">Festivais</a>
+    </div>
+    <button class="edit-toggle" id="editToggle" aria-pressed="false" hidden>Editar arquivo</button>
+  </div>
+</nav>
+
+<header class="hero" id="topo">
+  <canvas id="strings" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <p class="eyebrow rise">Instituto Superior de Engenharia do Porto</p>
+    <h1 class="rise"><span class="ln">Tuna Feminina</span><span class="ln"><em class="s">do ISEP</em></span></h1>
+    <p class="lead rise">O arquivo da nossa história: quem cantou connosco, os palcos que pisámos e as fotografias que ficaram.</p>
+    <div class="stats rise" aria-live="polite">
+      <div class="stat"><b id="sFund">—</b><span>Fundada em</span></div>
+      <div class="stat"><b id="sMemb">—</b><span>Membros no arquivo</span></div>
+      <div class="stat"><b id="sFest">—</b><span>Festivais</span></div>
+      <div class="stat"><b id="sPrem">—</b><span>Prémios</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="ch" id="historia">
+    <div class="wrap">
+      <div class="ch-head reveal">
+        <div>
+          <p class="eyebrow">Capítulo um</p>
+          <h2>A nossa <em class="s">história</em></h2>
+        </div>
+        <button class="add" data-add="marcos">+ Adicionar marco</button>
+      </div>
+      <div class="hist">
+        <div class="intro reveal" id="intro"></div>
+        <ol class="timeline" id="timeline"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch" id="membros">
+    <div class="wrap">
+      <div class="ch-head reveal">
+        <div>
+          <p class="eyebrow">Capítulo dois</p>
+          <h2>As <em class="s">tunas</em></h2>
+          <p class="sub">Todas as que vestiram o traje connosco, de caloira a veterana.</p>
+        </div>
+        <button class="add" data-add="membros">+ Adicionar membro</button>
+      </div>
+      <div class="bar" id="mFilter"></div>
+      <div class="members" id="members"></div>
+    </div>
+  </section>
+
+  <section class="ch" id="fotos">
+    <div class="wrap">
+      <div class="ch-head reveal">
+        <div>
+          <p class="eyebrow">Capítulo três</p>
+          <h2>Em <em class="s">fotografias</em></h2>
+          <p class="sub">Serenatas, atuações, viagens e ensaios, organizados por ano.</p>
+        </div>
+        <button class="add" data-add="fotos">+ Adicionar foto</button>
+      </div>
+      <div class="bar" id="fFilter"></div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </section>
+
+  <section class="ch" id="festivais">
+    <div class="wrap">
+      <div class="ch-head reveal">
+        <div>
+          <p class="eyebrow">Capítulo quatro</p>
+          <h2>Pelos <em class="s">festivais</em></h2>
+          <p class="sub">Cada festival em que participámos e os prémios que trouxemos para casa.</p>
+        </div>
+        <button class="add" data-add="festivais">+ Adicionar festival</button>
+      </div>
+      <ol class="fest" id="fest"></ol>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Tuna Feminina do ISEP · Instituto Superior de Engenharia do Porto</span>
+    <span class="status" id="status">A carregar o arquivo…</span>
+  </div>
+</footer>
+
+<dialog id="dlg"><form id="form" class="form" method="dialog" novalidate></form></dialog>
+<dialog id="lb" aria-label="Fotografia">
+  <div class="inner">
+    <img id="lbImg" alt="">
+    <button class="lb-btn lb-prev" id="lbPrev" aria-label="Anterior">‹</button>
+    <button class="lb-btn lb-next" id="lbNext" aria-label="Seguinte">›</button>
+    <button class="lb-btn lb-close" id="lbClose" aria-label="Fechar">×</button>
+  </div>
+  <div class="cap"><strong id="lbCap"></strong><span id="lbMeta"></span></div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<dialog id="login">
+  <form id="loginForm" class="form" novalidate>
+    <h3>Entrar para editar</h3>
+    <div class="field">
+      <label for="loginPass">Palavra-passe da tuna</label>
+      <input id="loginPass" type="password" autocomplete="current-password" required>
+    </div>
+    <p class="form-err" id="loginErr" hidden></p>
+    <div class="actions">
+      <button type="button" class="btn" id="loginCancel">Cancelar</button>
+      <button type="submit" class="btn primary">Entrar</button>
+    </div>
+  </form>
+</dialog>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
