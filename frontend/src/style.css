@@ -201,6 +201,8 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb-facts div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .mb-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .mb-facts dd { margin: 0; font-size: 14px; font-weight: 500; }
+.ger-title { grid-column: 1 / -1; margin: 12px 0 -4px; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(24px, 3vw, 32px); color: var(--accent); }
+.ger-title:first-child { margin-top: 0; }
 .caloiras { border-radius: var(--r); background: var(--blush); padding: clamp(40px, 7vw, 72px) clamp(24px, 5vw, 56px); }
 .caloiras p { font-family: var(--serif); font-style: italic; font-size: clamp(24px, 3.4vw, 38px); line-height: 1.25; color: var(--blush-ink); max-width: 30ch; text-wrap: balance; }
 .tag { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: var(--blush); color: var(--blush-ink); }

@@ -196,12 +196,14 @@ function renderMembros() {
   }
 
   const q = state.q.toLowerCase();
+  const porGeracao = state.mFiltro === INATIVA;
   const list = state.membros
     .filter(m => inFilter(m, state.mFiltro))
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
-    .sort(byOrder);
+    .sort(porGeracao ? (a, b) => (b.geracao ?? -1) - (a.geracao ?? -1) || byOrder(a, b) : byOrder);
   visibleMembers = list;
-  $('#members').innerHTML = list.length ? list.map((m, i) => `
+  // Tunantes Inativas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
+  const card = (m, i) => `
     <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}">
       <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>
       <div class="mb-body">
@@ -211,9 +213,18 @@ function renderMembros() {
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>
           <div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>
         </dl>
-        ${tools('membros', m.id, moveTools(m, i, list))}
+        ${tools('membros', m.id, porGeracao ? '' : moveTools(m, i, list))}
       </div>
-    </article>`).join('')
+    </article>`;
+  const grupos = () => {
+    let atual, html = '';
+    list.forEach((m, i) => {
+      if (i === 0 || (m.geracao || 0) !== atual) { atual = m.geracao || 0; html += `<h3 class="ger-title">${m.geracao ? `Geração ${fmtGeracao(m.geracao)}` : 'Sem geração'}</h3>`; }
+      html += card(m, i);
+    });
+    return html;
+  };
+  $('#members').innerHTML = list.length ? (porGeracao ? grupos() : list.map(card).join(''))
     : `<div class="empty" style="grid-column:1/-1"><strong>${state.membros.length ? 'Ninguém corresponde a este filtro.' : 'Ainda não há membros no arquivo.'}</strong>${state.membros.length ? 'Experimente outra hierarquia ou outra pesquisa.' : 'Adicione cada membro com a fotografia, os instrumentos, o naipe e a data de entrada.'}</div>`;
 }
 
