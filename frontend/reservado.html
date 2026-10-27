@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Área reservada · TUFEISEP</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#bc6751">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body class="reserved">
+
+<nav class="nav" aria-label="Área reservada">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="/logo.webp" alt="" width="36" height="36"><span>TUFE<em>ISEP</em></span></a>
+    <div class="links"><a href="./">Voltar ao site</a></div>
+    <div class="session">
+      <span class="who" id="who" hidden></span>
+      <button class="edit-toggle subtle" id="logoutBtn" hidden>Sair</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap res-main">
+  <header class="res-head">
+    <p class="eyebrow">Área reservada</p>
+    <h1>O nosso <em class="s">repertório</em></h1>
+    <p class="sub">Pautas, letras e gravações para ensaiar, organizadas por Atuação, Pasecalles, Serenatas e Outras músicas.</p>
+  </header>
+
+  <!-- Sem sessão -->
+  <section class="gate" id="gate" hidden>
+    <div class="gate-card">
+      <img src="/logo.webp" alt="" width="96" height="96">
+      <h2>Esta área é só para a tuna</h2>
+      <p>Entra com a conta da tua hierarquia para veres o repertório.</p>
+      <button class="btn primary" id="gateLogin">Entrar</button>
+    </div>
+  </section>
+
+  <!-- Com sessão -->
+  <div id="app" hidden>
+    <section class="res-links" aria-labelledby="linksTitle">
+      <div class="res-row">
+        <h2 id="linksTitle">Ligações úteis</h2>
+        <button class="add manage" id="addLink" hidden>+ Adicionar ligação</button>
+      </div>
+      <ul class="links-list" id="linksList"></ul>
+    </section>
+
+    <section class="res-songs" aria-labelledby="songsTitle">
+      <div class="res-row">
+        <h2 id="songsTitle">Músicas</h2>
+        <button class="add manage" id="addSong" hidden>+ Adicionar música</button>
+      </div>
+      <div class="bar" id="catFilter"></div>
+      <div class="songs" id="songs"></div>
+    </section>
+  </div>
+
+  <p class="status" id="status"></p>
+</main>
+
+<dialog id="dlg"><form id="form" class="form" novalidate></form></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module" src="/src/reservado.js"></script>
+</body>
+</html>

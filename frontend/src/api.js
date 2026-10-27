@@ -1,13 +1,9 @@
 // Dois modos de guardar o arquivo:
 //  - Supabase, quando VITE_SUPABASE_URL está definida (demo no GitHub Pages, gratuita);
 //  - o backend Express deste projeto, em /api (servidor próprio).
-import { createClient } from '@supabase/supabase-js';
+import { sb } from './supabase.js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const EDITOR_EMAIL = import.meta.env.VITE_EDITOR_EMAIL;
-
-const SESSION_ERROR = 'Sessão inválida. Entre outra vez com a palavra-passe da tuna.';
+const SESSION_ERROR = 'Sessão inválida. Entre outra vez com a conta da Administração.';
 const fail = (message, status) => Object.assign(new Error(message), { status });
 
 /* ---------- Backend Express ---------- */
@@ -49,7 +45,6 @@ function expressApi() {
 
 /* ---------- Supabase ---------- */
 function supabaseApi() {
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   const EXT = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
 
   // Traduz os erros do Supabase para mensagens que a página mostra.
@@ -63,13 +58,8 @@ function supabaseApi() {
     throw fail('Não foi possível guardar. Tente outra vez.', 500);
   }
 
+  // A sessão (entrar, sair, papel de cada conta) é tratada em auth.js.
   return {
-    async hasSession() { return Boolean((await sb.auth.getSession()).data.session); },
-    async login(password) {
-      const { error } = await sb.auth.signInWithPassword({ email: EDITOR_EMAIL, password });
-      if (error) throw fail(error.status === 429 ? 'Demasiadas tentativas. Tente outra vez daqui a pouco.' : 'Palavra-passe errada.', 401);
-    },
-    async logout() { await sb.auth.signOut(); },
     info: async () => check(await sb.from('info').select('fundacao, lema, historia').eq('id', 1).single()),
     saveInfo: async data => check(await sb.from('info').update(data).eq('id', 1).select().single()),
     list: async kind => check(await sb.from(kind).select('*').order('id')),
@@ -97,5 +87,5 @@ function supabaseApi() {
   };
 }
 
-export const api = SUPABASE_URL ? supabaseApi() : expressApi();
+export const api = sb ? supabaseApi() : expressApi();
 export const fileUrl = name => api.fileUrl(name);

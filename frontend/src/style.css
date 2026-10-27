@@ -74,8 +74,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .links { display: flex; gap: 22px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
 .links a { font-size: 13px; color: var(--muted); text-decoration: none; white-space: nowrap; transition: color .2s; }
 .links a:hover { color: var(--ink); }
-.edit-toggle { font-size: 12px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 99px; cursor: pointer; white-space: nowrap; transition: all .25s; }
+.session { display: flex; align-items: center; gap: 8px; }
+.edit-toggle { font-size: 12px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 99px; cursor: pointer; white-space: nowrap; text-decoration: none; transition: all .25s; }
+.edit-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .edit-toggle[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.edit-toggle.subtle { border-color: transparent; background: none; color: var(--muted); }
+.who { font-size: 12px; font-weight: 600; color: var(--blush-ink); background: var(--blush); padding: 6px 12px; border-radius: 99px; white-space: nowrap; }
 @media (max-width: 680px) { .links { display: none; } .nav .wrap { justify-content: space-between; } }
 
 /* hero */
@@ -123,7 +127,7 @@ body.editing .add { display: inline-flex; }
 .empty { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 40px 28px; color: var(--muted); display: grid; gap: 6px; }
 .empty strong { color: var(--ink); font-weight: 600; }
 .item-tools { display: none; gap: 6px; }
-body.editing .item-tools { display: flex; }
+body.editing .item-tools, .item-tools.on { display: flex; }
 .tool { border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; cursor: pointer; }
 .tool:disabled { opacity: .35; cursor: default; }
 .tool.danger.armed { background: var(--accent); color: var(--bg); border-color: var(--accent); }
@@ -285,3 +289,48 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } html { scroll-behavior: auto; } }
+
+/* ---------- área reservada ---------- */
+.res-main { padding-block: clamp(48px, 8vw, 96px) 96px; }
+.res-head h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 6vw, 72px); line-height: 1; letter-spacing: -.04em; margin-top: 10px; }
+.res-head .sub { margin-top: 14px; color: var(--muted); max-width: 56ch; }
+.res-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.res-row h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.reserved .add { display: inline-flex; }
+.reserved .add[hidden] { display: none; }
+.res-links { margin-top: 56px; }
+.res-songs { margin-top: 56px; }
+.links-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.links-list li { display: inline-flex; align-items: center; gap: 6px; }
+.links-list a { display: inline-flex; gap: 6px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14px; text-decoration: none; transition: border-color .25s, color .25s; }
+.links-list a:hover { border-color: var(--accent); color: var(--accent); }
+.muted { color: var(--muted); font-size: 14px; }
+
+.gate { margin-top: 48px; }
+.gate-card { max-width: 460px; padding: 40px 32px; border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); display: grid; justify-items: start; gap: 12px; }
+.gate-card img { width: 72px; height: 72px; }
+.gate-card h2 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.gate-card p { color: var(--muted); }
+
+.cat-group + .cat-group { margin-top: 40px; }
+.cat-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 30px; color: var(--accent); margin-bottom: 14px; }
+.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; align-items: start; }
+.song { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; display: grid; gap: 12px; }
+.song-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.song-head h4 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
+.song-notes { color: var(--muted); font-size: 14px; }
+.files { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.file { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--bg); }
+.file-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.file-kind { flex: none; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blush-ink); background: var(--blush); padding: 3px 8px; border-radius: 99px; }
+.file-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.file a.tool { text-decoration: none; color: var(--ink); }
+.file audio { width: 100%; height: 36px; }
+.song-link { font-size: 14px; font-weight: 600; color: var(--blush-ink); text-decoration: none; }
+.song-link:hover { text-decoration: underline; }
+.letra summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.letra div { margin-top: 8px; white-space: pre-line; font-size: 14px; color: var(--muted); line-height: 1.7; }
+.upload { display: inline-flex; justify-self: start; align-items: center; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; padding: 6px 0; }
+.upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.upload:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }

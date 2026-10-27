@@ -24,7 +24,12 @@
       <a href="#fotos">Fotos</a>
       <a href="#festivais">Festivais</a>
     </div>
-    <button class="edit-toggle" id="editToggle" aria-pressed="false" hidden>Editar arquivo</button>
+    <div class="session">
+      <a class="edit-toggle" id="reservedLink" href="reservado.html" hidden>Área reservada</a>
+      <button class="edit-toggle" id="editToggle" aria-pressed="false" hidden>Editar arquivo</button>
+      <button class="edit-toggle" id="loginBtn">Entrar</button>
+      <button class="edit-toggle subtle" id="logoutBtn" hidden>Sair</button>
+    </div>
   </div>
 </nav>
 
@@ -187,20 +192,6 @@
 </dialog>
 <div class="toast" id="toast" role="status"></div>
 
-<dialog id="login">
-  <form id="loginForm" class="form" novalidate>
-    <h3>Entrar para editar</h3>
-    <div class="field">
-      <label for="loginPass">Palavra-passe da tuna</label>
-      <input id="loginPass" type="password" autocomplete="current-password" required>
-    </div>
-    <p class="form-err" id="loginErr" hidden></p>
-    <div class="actions">
-      <button type="button" class="btn" id="loginCancel">Cancelar</button>
-      <button type="submit" class="btn primary">Entrar</button>
-    </div>
-  </form>
-</dialog>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

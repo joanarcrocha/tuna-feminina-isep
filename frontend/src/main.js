@@ -2,6 +2,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api, fileUrl } from './api.js';
 import { mountContact } from './contact.js';
+import { askLogin, getRole, signOut, hasReservedArea, ROLE_LABEL } from './auth.js';
 import { mountStrings } from './strings.js';
 
 const $ = s => document.querySelector(s);
@@ -362,7 +363,7 @@ function toast(msg) {
 }
 
 function handleError(err) {
-  if (err?.status === 401) { api.logout(); setEditing(false); }
+  if (err?.status === 401) { setEditing(false); signOut().then(updateNav); }
   toast(err?.message || 'Não foi possível guardar. Tente outra vez.');
 }
 
@@ -449,26 +450,29 @@ $('#form').addEventListener('submit', async e => {
   } finally { save.disabled = false; save.textContent = 'Guardar'; }
 });
 
-/* ---------- login ---------- */
-$('#editToggle').hidden = false;
-$('#editToggle').addEventListener('click', async () => {
-  if (state.edit) return setEditing(false);
-  if (await api.hasSession()) return setEditing(true);
-  $('#loginErr').hidden = true; $('#loginPass').value = '';
-  $('#login').showModal();
+/* ---------- sessão ---------- */
+// Público: "Entrar". Com sessão: "Área reservada" e "Sair"; a Administração também tem "Editar arquivo".
+async function updateNav() {
+  const role = await getRole();
+  $('#loginBtn').hidden = Boolean(role);
+  $('#logoutBtn').hidden = !role;
+  $('#reservedLink').hidden = !role || !hasReservedArea;
+  $('#editToggle').hidden = role !== 'admin';
+  if (role !== 'admin' && state.edit) setEditing(false);
+}
+
+$('#loginBtn').addEventListener('click', async () => {
+  const role = await askLogin();
+  if (!role) return;
+  await updateNav();
+  toast(`Entraste como ${ROLE_LABEL[role]}.`);
 });
-$('#loginCancel').onclick = () => $('#login').close();
-$('#loginForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const pass = $('#loginPass').value;
-  try {
-    await api.login(pass);
-    $('#login').close();
-    setEditing(true);
-  } catch (err) {
-    $('#loginErr').textContent = err.message; $('#loginErr').hidden = false;
-  }
+$('#logoutBtn').addEventListener('click', async () => {
+  await signOut();
+  await updateNav();
+  toast('Saíste da tua conta.');
 });
+$('#editToggle').addEventListener('click', () => setEditing(!state.edit));
 
 /* ---------- interações ---------- */
 document.addEventListener('click', e => {
@@ -505,5 +509,6 @@ $('#lb').addEventListener('click', e => { if (e.target.id === 'lb') $('#lb').clo
 
 mountStrings($('#strings'), $('.hero'));
 mountContact();
+updateNav();
 render();
 loadAll();

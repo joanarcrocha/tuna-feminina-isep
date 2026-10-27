@@ -53,3 +53,20 @@ E corra `npm run dev -w frontend`. Sem este ficheiro, o site usa o backend Expre
 - 500 MB de base de dados e 1 GB de fotografias. Chega para milhares de membros e algumas centenas de fotos.
 - Um projeto sem visitas durante 7 dias fica em pausa. Os dados não se perdem: reativa-se no painel do Supabase com um clique.
 - O plano gratuito não tem cópias de segurança automáticas que se possam descarregar. Para guardar uma cópia, use **Database > Backups** ou exporte cada tabela em CSV no **Table Editor**.
+
+## Área reservada e contas
+
+Há quatro contas, cada uma com um papel:
+
+| Utilizador no site | Email da conta no Supabase | Pode |
+| --- | --- | --- |
+| Administração | o `EDITOR_EMAIL` (jr@joanarocha.com) | editar todo o site e gerir o repertório |
+| Direção musical | tufeisep+dirmusical@gmail.com | gerir o repertório (músicas, ficheiros, ligações) |
+| Tunantes | tufeisep+tunantes@gmail.com | ver a área reservada |
+| Caloiras | tufeisep+caloiras@gmail.com | ver a área reservada |
+
+1. Em **Authentication > Users > Add user**, crie as três contas novas com **Auto Confirm User**.
+2. Corra `supabase/migracoes/007_area_reservada.sql` no **SQL Editor**.
+3. Para trocar uma palavra-passe, use **Authentication > Users**, nos três pontos ao lado da conta.
+
+Os papéis estão na tabela `perfis`. Os ficheiros do repertório ficam no armazenamento privado `musica` (máximo de 50 MB por ficheiro; o plano gratuito tem 1 GB no total).
