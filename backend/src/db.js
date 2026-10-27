@@ -32,7 +32,8 @@ db.exec(`
     estado        TEXT,                        -- Veterana, Tunante ou Caloira
     instrumentos  TEXT NOT NULL DEFAULT '[]',  -- lista JSON
     naipe         TEXT,
-    data_entrada  TEXT,                        -- ano de entrada na tuna (AAAA)
+    data_entrada  TEXT,                        -- já não se usa: ver geracao
+    geracao       INTEGER,                     -- geração a que pertence (ex.: 28)
     foto          TEXT,
     criado        TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -82,6 +83,7 @@ if (!festivaisCols.has('lat')) db.exec('ALTER TABLE festivais ADD COLUMN lat REA
 if (!festivaisCols.has('lng')) db.exec('ALTER TABLE festivais ADD COLUMN lng REAL');
 
 if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INTEGER');
+if (!membrosCols.has('geracao')) db.exec('ALTER TABLE membros ADD COLUMN geracao INTEGER');
 
 // A Magíster passou de opção à parte para hierarquia.
 if (membrosCols.has('magister')) {

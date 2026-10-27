@@ -30,7 +30,7 @@ const SCHEMAS = {
     { k: 'estado', l: 'Hierarquia', type: 'select', opts: HIERARQUIAS, req: true, hint: 'Só pode haver uma Magíster. Ao escolher uma nova, a anterior passa a Tunante.' },
     { k: 'instrumentos', l: 'Instrumentos', type: 'checks', opts: INSTRUMENTOS },
     { k: 'naipe', l: 'Naipe de voz', type: 'select', opts: NAIPES },
-    { k: 'data_entrada', l: 'Ano de entrada na Tuna', type: 'number' },
+    { k: 'geracao', l: 'Geração', type: 'number', min: 1, max: 99, hint: 'Só o número, por exemplo 28.' },
     { k: 'foto', l: 'Fotografia', type: 'image' },
   ]},
   fotos: { title: 'Fotografia', fields: [
@@ -54,7 +54,7 @@ const state = { info: {}, membros: [], carrossel: [], fotos: [], festivais: [], 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
 const initials = m => (m.nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-const fmtEntrada = ano => ano ? esc(ano) : '—';
+const fmtGeracao = g => g ? `Geração ${esc(g)}` : '—';
 const tools = (kind, id, extra = '') => `<div class="item-tools">${extra}<button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
 const fmtDate = d => {
   if (!d) return { big: '—', small: '' };
@@ -147,7 +147,7 @@ const inFilter = (m, filtro) =>
 const byOrder = (a, b) =>
   Number(isMagister(b)) - Number(isMagister(a)) ||
   (a.ordem ?? Infinity) - (b.ordem ?? Infinity) ||
-  String(a.data_entrada || '9999').localeCompare(String(b.data_entrada || '9999')) ||
+  (a.geracao ?? Infinity) - (b.geracao ?? Infinity) ||
   String(a.nome).localeCompare(b.nome, 'pt');
 
 const moveTools = (m, i, list) => isMagister(m) ? '' : `
@@ -209,7 +209,7 @@ function renderMembros() {
         <dl class="mb-facts">
           <div><dt>${(m.instrumentos || []).length > 1 ? 'Instrumentos' : 'Instrumento'}</dt><dd>${esc((m.instrumentos || []).join(', ')) || '—'}</dd></div>
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>
-          <div><dt>Entrada</dt><dd>${fmtEntrada(m.data_entrada)}</dd></div>
+          <div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>
         </dl>
         ${tools('membros', m.id, moveTools(m, i, list))}
       </div>
@@ -394,7 +394,7 @@ function openForm(kind, item) {
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
     else if (x.type === 'image') input = `<input type="file" id="${id}" name="${x.k}" accept="image/jpeg,image/png,image/webp,image/gif">` + (val ? `<span class="hint">Já tem imagem. Escolha outra para substituir.</span>` : '');
-    else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ' inputmode="numeric" min="1900" max="2100"' : ''}${req}>`;
+    else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ' inputmode="numeric" min="${x.min ?? 1900}" max="${x.max ?? 2100}"' : ''}${req}>`;
     return `<div class="field"><label for="${id}">${x.l}${x.req ? ' *' : ''}</label>${input}${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
   };
   $('#form').innerHTML = `<h3>${item ? 'Editar' : 'Novo'} · ${sc.title.toLowerCase()}</h3>${sc.fields.map(field).join('')}

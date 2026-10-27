@@ -26,12 +26,14 @@ create table if not exists membros (
   estado        text not null check (estado in ('Magíster', 'Veterana', 'Tunante', 'Caloira')),
   instrumentos  jsonb not null default '[]',
   naipe         text check (naipe in ('Contralto', 'Mezzo', 'Soprano')),
-  data_entrada  int,
+  data_entrada  int,                         -- já não se usa: ver geracao
+  geracao       int,
   foto          text,
   ordem         int,                         -- posição na lista do site
   criado        timestamptz not null default now()
 );
 alter table membros add column if not exists ordem int;
+alter table membros add column if not exists geracao int;
 
 -- A Magíster: só um membro de cada vez. Escolher uma nova passa a anterior a Tunante.
 create or replace function so_uma_magister() returns trigger language plpgsql as $$

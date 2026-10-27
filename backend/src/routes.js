@@ -6,7 +6,7 @@ import { upload, removeUpload } from './uploads.js';
 // Colunas que cada recurso aceita. O nome da tabela vem sempre desta lista, nunca do pedido.
 const RESOURCES = {
   marcos:    { text: ['titulo', 'texto', 'foto'], int: ['ano'], required: ['ano', 'titulo'], files: ['foto'] },
-  membros:   { text: ['nome', 'estado', 'naipe', 'foto'], int: ['data_entrada'], json: ['instrumentos'], required: ['nome', 'estado'], files: ['foto'] },
+  membros:   { text: ['nome', 'estado', 'naipe', 'foto'], int: ['geracao'], json: ['instrumentos'], required: ['nome', 'estado'], files: ['foto'] },
   carrossel: { text: ['foto', 'descricao'], int: [], required: ['foto'], files: ['foto'] },
   fotos:     { text: ['ficheiro', 'legenda'], int: ['ano'], required: ['ficheiro'], files: ['ficheiro'] },
   festivais: { text: ['nome', 'local', 'data', 'outros', 'notas'], int: [], num: ['lat', 'lng'], json: ['premios'], required: ['nome'], files: [] },
