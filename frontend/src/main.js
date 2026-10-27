@@ -30,7 +30,7 @@ const SCHEMAS = {
     { k: 'estado', l: 'Hierarquia', type: 'select', opts: HIERARQUIAS, req: true, hint: 'Só pode haver uma Magíster. Ao escolher uma nova, a anterior passa a Tunante.' },
     { k: 'instrumentos', l: 'Instrumentos', type: 'checks', opts: INSTRUMENTOS },
     { k: 'naipe', l: 'Naipe de voz', type: 'select', opts: NAIPES },
-    { k: 'geracao', l: 'Geração', type: 'number', min: 1, max: 99, hint: 'Só o número, por exemplo 28.' },
+    { k: 'geracao', l: 'Geração', type: 'number', min: 1, max: 99, hint: 'Escreva o número (por exemplo 28). No site aparece em numeração romana (XXVIII).' },
     { k: 'foto', l: 'Fotografia', type: 'image' },
   ]},
   fotos: { title: 'Fotografia', fields: [
@@ -54,7 +54,10 @@ const state = { info: {}, membros: [], carrossel: [], fotos: [], festivais: [], 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
 const initials = m => (m.nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-const fmtGeracao = g => g ? `Geração ${esc(g)}` : '—';
+// Gerações escrevem-se em numeração romana (28 -> XXVIII); o rótulo "Geração" já vem do campo ao lado.
+const toRoman = n => [[100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]
+  .reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
+const fmtGeracao = g => g ? toRoman(g) : '—';
 const tools = (kind, id, extra = '') => `<div class="item-tools">${extra}<button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
 const fmtDate = d => {
   if (!d) return { big: '—', small: '' };
