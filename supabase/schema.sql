@@ -23,7 +23,7 @@ create table if not exists marcos (
 create table if not exists membros (
   id            bigint generated always as identity primary key,
   nome          text not null,
-  estado        text not null check (estado in ('Magíster', 'Veterana', 'Tunante', 'Caloira')),
+  estado        text not null check (estado in ('Magíster', 'Veterana', 'Tunante', 'Caloira', 'Tunante Inativa')),
   instrumentos  jsonb not null default '[]',
   naipe         text check (naipe in ('Contralto', 'Mezzo', 'Soprano')),
   data_entrada  int,                         -- já não se usa: ver geracao

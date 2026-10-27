@@ -29,7 +29,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS membros (
     id            INTEGER PRIMARY KEY,
     nome          TEXT NOT NULL,
-    estado        TEXT,                        -- Veterana, Tunante ou Caloira
+    estado        TEXT,                        -- Tunante, Caloira ou Tunante Inativa (e Magíster)
     instrumentos  TEXT NOT NULL DEFAULT '[]',  -- lista JSON
     naipe         TEXT,
     data_entrada  TEXT,                        -- já não se usa: ver geracao

@@ -10,7 +10,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 
 const INSTRUMENTOS = ['Guitarra', 'Bandolim', 'Cavaquinho', 'Acordeão', 'Flauta transversal', 'Saxofone', 'Percussão', 'Estandarte', 'Pandeireta', 'Contra-baixo'];
 const NAIPES = ['Contralto', 'Mezzo', 'Soprano'];
-const ESTADOS = ['Veterana', 'Tunante', 'Caloira'];          // separadores da lista
+const INATIVA = 'Tunante Inativa';
+const ESTADOS = ['Tunante', INATIVA, 'Caloira'];             // separadores da lista (a Veterana fica de fora até haver alguma)
 const MAGISTER = 'Magíster';                                 // uma só, e conta como Tunante
 const HIERARQUIAS = [MAGISTER, ...ESTADOS];                  // opções do formulário
 const isMagister = m => m.estado === MAGISTER;
@@ -186,7 +187,7 @@ function renderMembros() {
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
   const showCount = e => e !== CALOIRA || state.edit;
   $('#mFilter').innerHTML = ['Todas', ...ESTADOS].map(e =>
-    `<button class="pill" data-mf="${e}" aria-pressed="${state.mFiltro === e}">${e === 'Todas' ? 'Todas' : e + 's'}${showCount(e) ? `<small>${counts[e]}</small>` : ''}</button>`).join('') +
+    `<button class="pill" data-mf="${e}" aria-pressed="${state.mFiltro === e}">${e === 'Todas' ? 'Todas' : e === INATIVA ? 'Tunantes Inativas' : e + 's'}${showCount(e) ? `<small>${counts[e]}</small>` : ''}</button>`).join('') +
     `<input class="search" id="mSearch" type="search" placeholder="Procurar por nome ou instrumento" aria-label="Procurar membros" value="${esc(state.q)}">`;
 
   if (state.mFiltro === CALOIRA && !state.edit) {
