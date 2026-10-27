@@ -201,11 +201,14 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb-facts div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .mb-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .mb-facts dd { margin: 0; font-size: 14px; font-weight: 500; }
-.members.compact { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-.ger-card { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 28px); }
-.ger-card.novo { animation: ger-in .8s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes ger-in { from { opacity: 0; transform: translateY(36px) scale(.98); } to { opacity: 1; transform: none; } }
+.members.compact { display: flex; flex-direction: column; gap: 24px; }  /* sem grelha, para os cartões poderem ficar presos ao topo (sticky) */
+.ger-card { background: var(--surface); border-radius: var(--r); box-shadow: 0 1px 2px rgba(65,50,40,.06), 0 14px 34px -12px rgba(65,50,40,.28); border: 1px solid var(--line); padding: clamp(18px, 3vw, 28px); position: relative; z-index: calc(var(--i, 0) + 1); transform: translateX(var(--dx, 0)) rotate(var(--rot, 0deg)); }
+/* Pilha: cada cartão fica preso por baixo do anterior, um pouco mais abaixo, e o seguinte desliza por cima. */
+.ger-card.fixa { position: sticky; top: calc(var(--nav-h, 76px) + var(--i, 0) * 16px); }
+.ger-card.novo { animation: ger-in .9s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes ger-in { from { opacity: 0; transform: translateY(80px) translateX(var(--dx, 0)) rotate(calc(var(--rot, 0deg) * 4)); } to { opacity: 1; transform: translateX(var(--dx, 0)) rotate(var(--rot, 0deg)); } }
 @media (prefers-reduced-motion: reduce) { .ger-card.novo { animation: none; } }
+@media (max-width: 680px) { .ger-card { --nav-h: 112px; } }
 .ger-card .ger-title { margin: 0 0 16px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .ger-title small { font-family: var(--body); font-style: normal; font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 .ger-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }

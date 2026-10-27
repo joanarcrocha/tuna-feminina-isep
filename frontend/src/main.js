@@ -183,6 +183,9 @@ async function moveMember(id, dir) {
 }
 
 let gerObserver = null, ultimoFiltro = null;
+// Só prende ao topo ("empilha") os cartões que cabem no ecrã; um cartão mais alto que o ecrã ficaria com o fim escondido.
+const ajustarPilha = () => requestAnimationFrame(() => document.querySelectorAll('.ger-card').forEach(c => c.classList.toggle('fixa', c.offsetHeight < innerHeight - 170)));
+addEventListener('resize', () => { clearTimeout(ajustarPilha.t); ajustarPilha.t = setTimeout(ajustarPilha, 200); });
 function renderMembros() {
   gerObserver?.disconnect();
   if (state.mFiltro !== ultimoFiltro) { ultimoFiltro = state.mFiltro; state.gerVistas = 1; }
@@ -230,8 +233,9 @@ function renderMembros() {
     if (!x || x.g !== g) gruposGer.push(x = { g, ms: [] });
     x.ms.push(m);
   });
-  const cartaoGer = ({ g, ms }, novo) => `
-    <section class="ger-card${novo ? ' novo' : ''}">
+  // Cartões empilhados: cada um fica um pouco rodado e deslocado, e o seguinte desliza por cima do anterior.
+  const cartaoGer = ({ g, ms }, i, novo) => `
+    <section class="ger-card${novo ? ' novo' : ''}" style="--i:${i};--rot:${i % 2 ? .6 : -.6}deg;--dx:${i % 2 ? 6 : -6}px">
       <h3 class="ger-title">${g ? `Geração ${fmtGeracao(g)}` : 'Sem geração'}<small>${ms.length} ${ms.length === 1 ? 'tunante' : 'tunantes'}</small></h3>
       <div class="ger-grid">${ms.map(m => card(m, 0)).join('')}</div>
     </section>`;
@@ -239,15 +243,17 @@ function renderMembros() {
     const box = $('#members');
     const todas = Boolean(q);
     const n = todas ? gruposGer.length : Math.min(Math.max(state.gerVistas, 1), gruposGer.length);
-    box.innerHTML = gruposGer.slice(0, n).map(g => cartaoGer(g)).join('') +
+    box.innerHTML = gruposGer.slice(0, n).map((g, i) => cartaoGer(g, i)).join('') +
       (n < gruposGer.length ? `<div class="ger-more" id="gerMore"><button class="btn" data-ger-next>Próxima geração <small>${gruposGer.length - n} por ver</small></button></div>` : '');
+    ajustarPilha();
     const mais = $('#gerMore');
     if (!mais) return;
     const seguinte = () => {
       if (state.gerVistas >= gruposGer.length) return;
       gerObserver?.disconnect();
       state.gerVistas++;
-      mais.insertAdjacentHTML('beforebegin', cartaoGer(gruposGer[state.gerVistas - 1], true));
+      mais.insertAdjacentHTML('beforebegin', cartaoGer(gruposGer[state.gerVistas - 1], state.gerVistas - 1, true));
+      ajustarPilha();
       if (state.gerVistas >= gruposGer.length) mais.remove();
       else {
         mais.querySelector('small').textContent = `${gruposGer.length - state.gerVistas} por ver`;
