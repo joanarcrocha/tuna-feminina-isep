@@ -57,6 +57,7 @@ function supabaseApi() {
     if (error.code === '42501' || error.code === 'PGRST301' || error.status === 401 || error.status === 403) throw fail(SESSION_ERROR, 401);
     if (error.code === 'PGRST116') throw fail('Registo não encontrado, ou a sessão terminou. Entre outra vez.', 401);
     if (error.code === 'PGRST204') throw fail('A base de dados precisa de ser atualizada. Corra a migração mais recente no Supabase.', 500);
+    if (error.code === '23505') throw fail('Já existe uma Magíster. Recarregue a página e tente outra vez.', 409);
     if (error.code === '23514') throw fail('Há um valor que não é aceite. Confirme a hierarquia e o naipe.', 400);
     throw fail('Não foi possível guardar. Tente outra vez.', 500);
   }
