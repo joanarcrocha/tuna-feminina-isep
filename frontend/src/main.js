@@ -8,7 +8,7 @@ import { mountStrings } from './strings.js';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const INSTRUMENTOS = ['Guitarra', 'Bandolim', 'Cavaquinho', 'Acordeão', 'Flauta transversal', 'Saxofone', 'Percussão', 'Estandarte', 'Pandeireta', 'Contra-baixo'];
+const INSTRUMENTOS = ['Guitarra', 'Bandolim', 'Cavaquinho', 'Violino', 'Acordeão', 'Flauta transversal', 'Saxofone', 'Percussão', 'Estandarte', 'Pandeireta', 'Contra-baixo'];
 const NAIPES = ['Contralto', 'Mezzo', 'Soprano'];
 const INATIVA = 'Tunante Inativa';
 const ESTADOS = ['Tunante', INATIVA, 'Caloira'];             // separadores da lista (a Veterana fica de fora até haver alguma)
