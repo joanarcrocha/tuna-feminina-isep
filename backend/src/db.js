@@ -70,6 +70,8 @@ if (!membrosCols.has('data_entrada')) {
 }
 db.exec(`UPDATE membros SET estado = 'Tunante' WHERE estado = 'Tuna'`);
 
+if (!membrosCols.has('magister')) db.exec('ALTER TABLE membros ADD COLUMN magister INTEGER NOT NULL DEFAULT 0');
+
 // Da entrada só se guarda o ano.
 db.exec(`UPDATE membros SET data_entrada = substr(data_entrada, 1, 4) WHERE length(data_entrada) > 4`);
 

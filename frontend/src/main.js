@@ -24,6 +24,7 @@ const SCHEMAS = {
   membros: { title: 'Membro', fields: [
     { k: 'nome', l: 'Nome', req: true },
     { k: 'estado', l: 'Hierarquia', type: 'select', opts: ESTADOS, req: true },
+    { k: 'magister', l: 'É a Magíster', type: 'toggle', hint: 'Só pode haver uma. Ao marcar esta, a anterior deixa de o ser.' },
     { k: 'instrumentos', l: 'Instrumentos', type: 'checks', opts: INSTRUMENTOS },
     { k: 'naipe', l: 'Naipe de voz', type: 'select', opts: NAIPES },
     { k: 'data_entrada', l: 'Ano de entrada na Tuna', type: 'number' },
@@ -112,10 +113,10 @@ function renderMembros() {
   const list = state.membros
     .filter(m => state.mFiltro === 'Todas' ? daTuna(m) : m.estado === state.mFiltro)
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
-    .sort((a, b) => String(a.data_entrada || '9999').localeCompare(String(b.data_entrada || '9999')) || String(a.nome).localeCompare(b.nome, 'pt'));
+    .sort((a, b) => Number(Boolean(b.magister)) - Number(Boolean(a.magister)) || String(a.data_entrada || '9999').localeCompare(String(b.data_entrada || '9999')) || String(a.nome).localeCompare(b.nome, 'pt'));
   $('#members').innerHTML = list.length ? list.map(m => `
-    <article class="mb reveal">
-      <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}</div>
+    <article class="mb reveal${m.magister ? ' is-magister' : ''}">
+      <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${m.magister ? '<span class="badge">Magíster</span>' : ''}</div>
       <div class="mb-body">
         <h3 class="nt">${esc(m.nome)}</h3>
         <dl class="mb-facts">
@@ -241,6 +242,7 @@ function openForm(kind, item) {
     else if (x.type === 'select') input = `<select id="${id}" name="${x.k}"><option value="">—</option>${x.opts.map(o => `<option${o === val ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
+    else if (x.type === 'toggle') return `<div class="field"><label class="toggle" for="${id}"><input type="checkbox" id="${id}" name="${x.k}" value="1"${val ? ' checked' : ''}>${x.l}</label>${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
     else if (x.type === 'image') input = `<input type="file" id="${id}" name="${x.k}" accept="image/jpeg,image/png,image/webp,image/gif">` + (val ? `<span class="hint">Já tem imagem. Escolha outra para substituir.</span>` : '');
     else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ' inputmode="numeric" min="1900" max="2100"' : ''}${req}>`;
     return `<div class="field"><label for="${id}">${x.l}${x.req ? ' *' : ''}</label>${input}${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
@@ -271,6 +273,7 @@ $('#form').addEventListener('submit', async e => {
         const file = fd.get(x.k);
         data[x.k] = file?.size ? (await api.upload(file)).ficheiro : item?.[x.k] ?? null;
       } else if (x.type === 'checks') data[x.k] = fd.getAll(x.k);
+      else if (x.type === 'toggle') data[x.k] = fd.get(x.k) === '1';
       else if (x.type === 'number') { const n = parseInt(fd.get(x.k), 10); data[x.k] = Number.isFinite(n) ? n : null; }
       else data[x.k] = String(fd.get(x.k) || '').trim() || null;
     }

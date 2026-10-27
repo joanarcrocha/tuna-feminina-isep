@@ -6,13 +6,20 @@ import { upload, removeUpload } from './uploads.js';
 // Colunas que cada recurso aceita. O nome da tabela vem sempre desta lista, nunca do pedido.
 const RESOURCES = {
   marcos:    { text: ['titulo', 'texto', 'foto'], int: ['ano'], required: ['ano', 'titulo'], files: ['foto'] },
-  membros:   { text: ['nome', 'estado', 'naipe', 'foto'], int: ['data_entrada'], json: ['instrumentos'], required: ['nome', 'estado'], files: ['foto'] },
+  membros:   { text: ['nome', 'estado', 'naipe', 'foto'], int: ['data_entrada'], json: ['instrumentos'], bool: ['magister'], single: ['magister'], required: ['nome', 'estado'], files: ['foto'] },
   fotos:     { text: ['ficheiro', 'legenda'], int: ['ano'], required: ['ficheiro'], files: ['ficheiro'] },
   festivais: { text: ['nome', 'local', 'data', 'outros', 'notas'], int: [], json: ['premios'], required: ['nome'], files: [] },
 };
 const INFO = { text: ['lema', 'historia'], int: ['fundacao'], required: [] };
 
-const columns = spec => [...spec.text, ...spec.int, ...(spec.json || [])];
+const columns = spec => [...spec.text, ...spec.int, ...(spec.json || []), ...(spec.bool || [])];
+
+// Campos "single" só podem estar ligados num registo de cada vez (a Magíster).
+function keepSingle(spec, table, id, data) {
+  for (const k of spec.single || []) {
+    if (data[k]) db.prepare(`UPDATE ${table} SET ${k} = 0 WHERE id != ?`).run(id);
+  }
+}
 
 function clean(spec, body = {}) {
   const out = {};
@@ -28,6 +35,7 @@ function clean(spec, body = {}) {
     const arr = Array.isArray(body[k]) ? body[k].filter(x => typeof x === 'string').map(x => x.trim()).filter(Boolean) : [];
     out[k] = JSON.stringify(arr.slice(0, 50));
   }
+  for (const k of spec.bool || []) out[k] = body[k] === true ? 1 : 0;
   const missing = spec.required.find(k => out[k] == null);
   if (missing) throw Object.assign(new Error(`Falta o campo “${missing}”.`), { status: 400 });
   return out;
@@ -36,6 +44,7 @@ function clean(spec, body = {}) {
 function parse(spec, row) {
   if (!row) return row;
   for (const k of spec.json || []) row[k] = JSON.parse(row[k] || '[]');
+  for (const k of spec.bool || []) row[k] = Boolean(row[k]);
   return row;
 }
 
@@ -84,6 +93,7 @@ api.post('/:recurso', requireAuth, getResource, (req, res) => {
   const { lastInsertRowid } = db
     .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(c => '@' + c).join(', ')})`)
     .run(data);
+  keepSingle(spec, table, lastInsertRowid, data);
   res.status(201).json(parse(spec, db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(lastInsertRowid)));
 });
 
@@ -93,6 +103,7 @@ api.put('/:recurso/:id', requireAuth, getResource, async (req, res) => {
   if (!before) return res.status(404).json({ erro: 'Registo não encontrado.' });
   const data = clean(spec, req.body), cols = columns(spec);
   db.prepare(`UPDATE ${table} SET ${cols.map(c => `${c} = @${c}`).join(', ')} WHERE id = @id`).run({ ...data, id: before.id });
+  keepSingle(spec, table, before.id, data);
   for (const k of spec.files) if (before[k] && before[k] !== data[k]) await removeUpload(before[k]);
   res.json(parse(spec, db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(before.id)));
 });
