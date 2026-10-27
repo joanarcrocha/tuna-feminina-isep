@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TUFEISEP · Tuna Feminina do ISEP</title>
-  <meta name="description" content="Arquivo da Tuna Feminina do ISEP (TUFEISEP), fundada em 1991: história, membros, fotografias e festivais.">
+  <meta name="description" content="Arquivo da Tuna Feminina do ISEP (TUFEISEP), fundada em 1991: história, membros e festivais.">
   <meta name="theme-color" content="#bc6751">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -21,7 +21,6 @@
     <div class="links">
       <a href="#historia">História</a>
       <a href="#membros">Membros</a>
-      <a href="#fotos">Fotos</a>
       <a href="#festivais">Festivais</a>
     </div>
     <div class="session">
@@ -41,7 +40,7 @@
     <p class="eyebrow rise">TUFEISEP · Instituto Superior de Engenharia do Porto</p>
     <h1 class="rise"><span class="ln">Tuna Feminina</span><span class="ln"><em class="s">do ISEP</em></span></h1>
     <p class="hino rise" id="hino" hidden></p>
-    <p class="lead rise">O arquivo da nossa história: quem cantou connosco, os palcos que pisámos e as fotografias que ficaram.</p>
+    <p class="lead rise">O arquivo da nossa história: quem cantou connosco e os palcos que pisámos.</p>
     <nav class="social rise" aria-label="Redes sociais da TUFEISEP">
       <a href="https://www.instagram.com/tufeisep/" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>Instagram</a>
@@ -96,26 +95,11 @@
     </div>
   </section>
 
-  <section class="ch" id="fotos">
-    <div class="wrap">
-      <div class="ch-head reveal">
-        <div>
-          <p class="eyebrow">Capítulo três</p>
-          <h2>Em <em class="s">fotografias</em></h2>
-          <p class="sub">Serenatas, atuações, viagens e ensaios, organizados por ano.</p>
-        </div>
-        <button class="add" data-add="fotos">+ Adicionar foto</button>
-      </div>
-      <div class="bar" id="fFilter"></div>
-      <div class="gallery" id="gallery"></div>
-    </div>
-  </section>
-
   <section class="ch" id="festivais">
     <div class="wrap">
       <div class="ch-head reveal">
         <div>
-          <p class="eyebrow">Capítulo quatro</p>
+          <p class="eyebrow">Capítulo três</p>
           <h2>Pelos <em class="s">festivais</em></h2>
           <p class="sub">Cada festival em que participámos e as cidades por onde a tuna já passou.</p>
         </div>
@@ -181,15 +165,6 @@
 </dialog>
 
 <dialog id="dlg"><form id="form" class="form" method="dialog" novalidate></form></dialog>
-<dialog id="lb" aria-label="Fotografia">
-  <div class="inner">
-    <img id="lbImg" alt="">
-    <button class="lb-btn lb-prev" id="lbPrev" aria-label="Anterior">‹</button>
-    <button class="lb-btn lb-next" id="lbNext" aria-label="Seguinte">›</button>
-    <button class="lb-btn lb-close" id="lbClose" aria-label="Fechar">×</button>
-  </div>
-  <div class="cap"><strong id="lbCap"></strong><span id="lbMeta"></span></div>
-</dialog>
 <div class="toast" id="toast" role="status"></div>
 
 <script type="module" src="/src/main.js"></script>

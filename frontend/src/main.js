@@ -33,11 +33,6 @@ const SCHEMAS = {
     { k: 'geracao', l: 'Geração', type: 'number', min: 1, max: 99, hint: 'Escreva o número (por exemplo 28). No site aparece em numeração romana (XXVIII).' },
     { k: 'foto', l: 'Fotografia', type: 'image' },
   ]},
-  fotos: { title: 'Fotografia', fields: [
-    { k: 'ficheiro', l: 'Imagem', type: 'image', req: true },
-    { k: 'legenda', l: 'Legenda' },
-    { k: 'ano', l: 'Ano', type: 'number' },
-  ]},
   festivais: { title: 'Festival', fields: [
     { k: 'nome', l: 'Nome do festival', req: true },
     { k: 'local', l: 'Cidade' },
@@ -47,9 +42,9 @@ const SCHEMAS = {
     { k: 'notas', l: 'Notas', type: 'textarea' },
   ]},
 };
-const KINDS = ['carrossel', 'membros', 'fotos', 'festivais'];
+const KINDS = ['carrossel', 'membros', 'festivais'];
 
-const state = { info: {}, membros: [], carrossel: [], fotos: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', fFiltro: 'Todos', q: '' };
+const state = { info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -220,28 +215,6 @@ function renderMembros() {
     : `<div class="empty" style="grid-column:1/-1"><strong>${state.membros.length ? 'Ninguém corresponde a este filtro.' : 'Ainda não há membros no arquivo.'}</strong>${state.membros.length ? 'Experimente outra hierarquia ou outra pesquisa.' : 'Adicione cada membro com a fotografia, os instrumentos, o naipe e a data de entrada.'}</div>`;
 }
 
-let visiblePhotos = [];
-function renderFotos() {
-  const anos = [...new Set(state.fotos.map(f => f.ano).filter(Boolean))].sort((a, b) => b - a);
-  $('#fFilter').innerHTML = state.fotos.length ? ['Todos', ...anos].map(a =>
-    `<button class="pill" data-ff="${a}" aria-pressed="${String(state.fFiltro) === String(a)}">${a}</button>`).join('') : '';
-  visiblePhotos = state.fotos
-    .filter(f => state.fFiltro === 'Todos' || String(f.ano) === String(state.fFiltro))
-    .sort((a, b) => (b.ano || 0) - (a.ano || 0) || b.id - a.id);
-  $('#gallery').innerHTML = visiblePhotos.length ? visiblePhotos.map((f, i) => `
-    <figure class="ph reveal">
-      <button class="open" data-lb="${i}" aria-label="Abrir ${esc(f.legenda || 'fotografia')}">
-        <img src="${fileUrl(f.ficheiro)}" alt="${esc(f.legenda || '')}" loading="lazy">
-      </button>
-      ${(f.legenda || f.ano) ? `<figcaption><span>${esc(f.legenda)}</span><span>${esc(f.ano)}</span></figcaption>` : ''}
-      ${tools('fotos', f.id)}
-    </figure>`).join('')
-    : `<div class="empty"><strong>A galeria está vazia.</strong>Carregue fotografias de atuações, serenatas e viagens, com legenda e ano.</div>`;
-  $('#gallery').querySelectorAll('img').forEach(img => img.addEventListener('error', () => {
-    img.replaceWith(Object.assign(document.createElement('div'), { className: 'broken', textContent: 'Imagem indisponível' }));
-  }, { once: true }));
-}
-
 function renderFestivais() {
   const list = [...state.festivais].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
   $('#fest').innerHTML = list.length ? list.map(f => {
@@ -328,7 +301,7 @@ async function geocode(local) {
 function render() {
   const focused = document.activeElement?.id === 'mSearch';
   const pos = focused ? document.activeElement.selectionStart : 0;
-  renderStats(); renderHistoria(); renderMembros(); renderFotos(); renderFestivais();
+  renderStats(); renderHistoria(); renderMembros(); renderFestivais();
   if (focused) { const s = $('#mSearch'); s.focus(); s.setSelectionRange(pos, pos); }
 }
 
@@ -482,33 +455,14 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button');
   if (!t) return;
   if (t.dataset.mf) { state.mFiltro = t.dataset.mf; render(); }
-  else if (t.dataset.ff) { state.fFiltro = t.dataset.ff; render(); }
   else if (t.dataset.add) openForm(t.dataset.add);
   else if (t.dataset.edit) openForm(t.dataset.edit, t.dataset.edit === 'info' ? state.info : state[t.dataset.edit].find(x => String(x.id) === t.dataset.id));
   else if (t.dataset.del) armDelete(t);
   else if (t.dataset.move) moveMember(t.dataset.id, Number(t.dataset.move));
   else if (t.dataset.car) showSlide(slideIdx + Number(t.dataset.car), true);
   else if (t.dataset.dot) showSlide(Number(t.dataset.dot), true);
-  else if (t.dataset.lb) openLb(+t.dataset.lb);
 });
 document.addEventListener('input', e => { if (e.target.id === 'mSearch') { state.q = e.target.value; render(); } });
-
-/* ---------- lightbox ---------- */
-let lbI = 0;
-function openLb(i) { lbI = i; showLb(); if (!$('#lb').open) $('#lb').showModal(); }
-function showLb() {
-  const f = visiblePhotos[lbI];
-  if (!f) return;
-  $('#lbImg').src = fileUrl(f.ficheiro); $('#lbImg').alt = f.legenda || '';
-  $('#lbCap').textContent = f.legenda || '';
-  $('#lbMeta').textContent = `${f.ano || ''}  ${lbI + 1} / ${visiblePhotos.length}`;
-}
-const step = d => { lbI = (lbI + d + visiblePhotos.length) % visiblePhotos.length; showLb(); };
-$('#lbPrev').onclick = () => step(-1);
-$('#lbNext').onclick = () => step(1);
-$('#lbClose').onclick = () => $('#lb').close();
-$('#lb').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(-1); if (e.key === 'ArrowRight') step(1); });
-$('#lb').addEventListener('click', e => { if (e.target.id === 'lb') $('#lb').close(); });
 
 mountStrings($('#strings'), $('.hero'));
 mountContact();
