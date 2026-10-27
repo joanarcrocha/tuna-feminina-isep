@@ -207,7 +207,9 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb.compact .mb-body { padding: 14px 16px; gap: 8px; }
 .mb.compact .nt { font-size: 16px; }
 .mb.compact .mb-facts { gap: 4px; }
-.mb.compact .mb-facts div { grid-template-columns: 74px minmax(0, 1fr); gap: 8px; }
+.mb.compact .mb-facts div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+.mb.compact .mb-facts dt { font-size: 10px; }
+.mb.compact .mb-facts dd { overflow-wrap: anywhere; }
 .mb.compact .mb-facts dd { font-size: 13px; }
 .ger-title { grid-column: 1 / -1; margin: 12px 0 -4px; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(24px, 3vw, 32px); color: var(--accent); }
 .ger-title:first-child { margin-top: 0; }
