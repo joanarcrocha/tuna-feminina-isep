@@ -183,6 +183,8 @@ async function moveMember(id, dir) {
 }
 
 function renderMembros() {
+  // Tunantes Inativas: cartões pequenos, sem fotografia.
+  $('#members').classList.toggle('compact', state.mFiltro === INATIVA);
   const counts = { Todas: state.membros.filter(daTuna).length };
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
   const showCount = e => e !== CALOIRA || state.edit;
@@ -204,14 +206,14 @@ function renderMembros() {
   visibleMembers = list;
   // Tunantes Inativas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
   const card = (m, i) => `
-    <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}">
-      <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>
+    <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}${porGeracao ? ' compact' : ''}">
+      ${porGeracao ? '' : `<div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>`}
       <div class="mb-body">
         <h3 class="nt">${esc(m.nome)}</h3>
         <dl class="mb-facts">
           <div><dt>${(m.instrumentos || []).length > 1 ? 'Instrumentos' : 'Instrumento'}</dt><dd>${esc((m.instrumentos || []).join(', ')) || '—'}</dd></div>
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>
-          <div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>
+          ${porGeracao ? '' : `<div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>`}
         </dl>
         ${tools('membros', m.id, porGeracao ? '' : moveTools(m, i, list))}
       </div>

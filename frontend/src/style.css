@@ -201,6 +201,14 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb-facts div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .mb-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .mb-facts dd { margin: 0; font-size: 14px; font-weight: 500; }
+.members.compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+.mb.compact { grid-template-rows: 1fr; border-radius: 14px; }
+.mb.compact:hover { transform: none; }
+.mb.compact .mb-body { padding: 14px 16px; gap: 8px; }
+.mb.compact .nt { font-size: 16px; }
+.mb.compact .mb-facts { gap: 4px; }
+.mb.compact .mb-facts div { grid-template-columns: 74px minmax(0, 1fr); gap: 8px; }
+.mb.compact .mb-facts dd { font-size: 13px; }
 .ger-title { grid-column: 1 / -1; margin: 12px 0 -4px; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(24px, 3vw, 32px); color: var(--accent); }
 .ger-title:first-child { margin-top: 0; }
 .caloiras { border-radius: var(--r); background: var(--blush); padding: clamp(40px, 7vw, 72px) clamp(24px, 5vw, 56px); }
