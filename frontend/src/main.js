@@ -139,7 +139,7 @@ $('#carousel').addEventListener('focusout', () => { slidePaused = false; });
 // As caloiras ainda não pertencem à tuna: o público vê uma mensagem, só quem edita vê a lista.
 const CALOIRA = 'Caloira';
 const MSG_CALOIRAS = 'As caloiras da TUFEISEP estão a tentar conquistar o seu lugar na Tuna, tenta mais tarde';
-const daTuna = m => m.estado !== CALOIRA;
+const daTuna = m => m.estado !== CALOIRA && m.estado !== INATIVA;   // tunantes em atividade: as caloiras e as inativas têm o seu separador
 const inFilter = (m, filtro) =>
   filtro === 'Todas' ? daTuna(m) : filtro === 'Tunante' ? m.estado === 'Tunante' || isMagister(m) : m.estado === filtro;
 
