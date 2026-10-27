@@ -64,7 +64,7 @@ const fmtDate = d => {
 
 function renderStats() {
   const L = state.loaded;
-  $('#sFund').textContent = state.info.fundacao || '—';
+  $('#sFund').textContent = state.info.fundacao || 1991;   // ano que está no emblema
   $('#sMemb').textContent = L ? state.membros.filter(daTuna).length : '—';
   $('#sFest').textContent = L ? state.festivais.length : '—';
   $('#sPrem').textContent = L ? state.festivais.reduce((n, f) => n + allPrizes(f).length, 0) : '—';
@@ -73,8 +73,10 @@ function renderStats() {
 function renderHistoria() {
   const i = state.info;
   const paras = String(i.historia || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
-  $('#intro').innerHTML = (i.lema ? `<p class="lema">“${esc(i.lema)}”</p>` : '') +
-    (paras.length
+  // O lema aparece no topo do site, por baixo do nome.
+  $('#hino').textContent = i.lema ? `“${i.lema}”` : '';
+  $('#hino').hidden = !i.lema;
+  $('#intro').innerHTML = (paras.length
       ? `<div class="txt">${paras.map(p => `<p>${esc(p)}</p>`).join('')}</div>`
       : `<div class="empty"><strong>A história ainda está por escrever.</strong>Conte como a tuna nasceu, quem a fundou e o que a move. Carregue em “Editar arquivo” para começar.</div>`) +
     `<div class="item-tools"><button class="tool" data-edit="info" data-id="info">Editar texto</button></div>`;

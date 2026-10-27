@@ -3,18 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Tuna Feminina do ISEP</title>
-  <meta name="description" content="Arquivo da Tuna Feminina do ISEP: história, membros, fotografias e festivais.">
+  <title>TUFEISEP · Tuna Feminina do ISEP</title>
+  <meta name="description" content="Arquivo da Tuna Feminina do ISEP (TUFEISEP), fundada em 1991: história, membros, fotografias e festivais.">
+  <meta name="theme-color" content="#bc6751">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atma:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
 
 <nav class="nav" aria-label="Secções">
   <div class="wrap">
-    <a class="brand" href="#topo">Tuna Feminina <em>do ISEP</em></a>
+    <a class="brand" href="#topo"><img src="/logo.webp" alt="" width="36" height="36"><span>TUFE<em>ISEP</em></span></a>
     <div class="links">
       <a href="#historia">História</a>
       <a href="#membros">Membros</a>
@@ -28,9 +31,15 @@
 <header class="hero" id="topo">
   <canvas id="strings" aria-hidden="true"></canvas>
   <div class="wrap">
-    <p class="eyebrow rise">Instituto Superior de Engenharia do Porto</p>
+   <div class="hero-grid">
+    <div>
+    <p class="eyebrow rise">TUFEISEP · Instituto Superior de Engenharia do Porto</p>
     <h1 class="rise"><span class="ln">Tuna Feminina</span><span class="ln"><em class="s">do ISEP</em></span></h1>
+    <p class="hino rise" id="hino" hidden></p>
     <p class="lead rise">O arquivo da nossa história: quem cantou connosco, os palcos que pisámos e as fotografias que ficaram.</p>
+    </div>
+    <img class="hero-logo" src="/logo.webp" alt="Emblema da Tuna Feminina do Instituto Superior de Engenharia do Porto, fundada em 1991" width="300" height="300">
+   </div>
     <div class="stats rise" aria-live="polite">
       <div class="stat"><b id="sFund">—</b><span>Fundada em</span></div>
       <div class="stat"><b id="sMemb">—</b><span>Membros no arquivo</span></div>
@@ -104,7 +113,10 @@
 
 <footer>
   <div class="wrap">
-    <span>Tuna Feminina do ISEP · Instituto Superior de Engenharia do Porto</span>
+    <div class="foot-brand">
+      <img src="/logo.webp" alt="" width="56" height="56" loading="lazy">
+      <span><strong>TUFEISEP</strong>Tuna Feminina do Instituto Superior de Engenharia do Porto · desde 1991</span>
+    </div>
     <span class="status" id="status">A carregar o arquivo…</span>
   </div>
 </footer>
