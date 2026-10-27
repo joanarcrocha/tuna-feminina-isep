@@ -1,3 +1,5 @@
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { api, fileUrl } from './api.js';
 import { mountStrings } from './strings.js';
 
@@ -64,7 +66,7 @@ function renderStats() {
   $('#sFund').textContent = state.info.fundacao || 1991;   // ano que está no emblema
   $('#sMemb').textContent = L ? state.membros.filter(daTuna).length : '—';
   $('#sFest').textContent = L ? state.festivais.length : '—';
-  $('#sPrem').textContent = L ? state.festivais.reduce((n, f) => n + allPrizes(f).length, 0) : '—';
+  $('#sAnos').textContent = new Date().getFullYear() - (state.info.fundacao || 1991);
 }
 
 function renderHistoria() {
@@ -239,19 +241,83 @@ function renderFestivais() {
   const list = [...state.festivais].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
   $('#fest').innerHTML = list.length ? list.map(f => {
     const d = fmtDate(f.data), pr = allPrizes(f);
-    return `<li class="fv reveal">
+    return `<li class="fv reveal" data-place="${esc(placeKey(f))}">
       <div class="dt"><b>${d.big}</b>${esc(d.small)}</div>
       <div>
         <h3>${esc(f.nome)}</h3>
         ${f.local ? `<div class="loc">${esc(f.local)}</div>` : ''}
-        ${pr.length ? `<div class="prizes">${pr.map(p => `<span class="tag">${esc(p)}</span>`).join('')}</div>` : ''}
+        ${pr.length ? `<p class="prizes">${esc(pr.join(' · '))}</p>` : ''}
         ${f.notas ? `<p class="notes">${esc(f.notas)}</p>` : ''}
         ${tools('festivais', f.id)}
       </div>
-      <div class="count">${pr.length || '—'}<small>${pr.length === 1 ? 'prémio' : 'prémios'}</small></div>
     </li>`;
   }).join('')
-    : `<li class="empty"><strong>Nenhum festival registado.</strong>Registe cada festival com a data, a cidade e os prémios ganhos.</li>`;
+    : `<li class="empty"><strong>Nenhum festival registado.</strong>Registe cada festival com a data e a cidade.</li>`;
+  renderMapa();
+}
+
+/* ---------- mapa dos festivais ---------- */
+const placeKey = f => String(f.local || '').trim().toLowerCase();
+let map = null, mapLayer = null, mapKey = '';
+const markers = new Map();
+
+function renderMapa() {
+  const el = $('#festMap');
+  // Uma marca por cidade, com os festivais que lá aconteceram.
+  const places = new Map();
+  for (const f of state.festivais) {
+    if (!Number.isFinite(f.lat) || !Number.isFinite(f.lng)) continue;
+    const k = placeKey(f);
+    if (!places.has(k)) places.set(k, { name: f.local, lat: f.lat, lng: f.lng, fests: [] });
+    places.get(k).fests.push(f);
+  }
+  const key = JSON.stringify([...places].map(([k, p]) => [k, p.lat, p.lng, p.fests.map(f => [f.nome, f.data])]));
+  if (key === mapKey) return;
+  mapKey = key;
+  el.hidden = !places.size;
+  if (!places.size) return;
+
+  if (!map) {
+    map = L.map(el, { scrollWheelZoom: false, zoomControl: true, attributionControl: true });
+    // Mapa do OpenStreetMap (gratuito, sem chave); o CSS põe-no em tons de cinza.
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    mapLayer = L.layerGroup().addTo(map);
+  }
+  mapLayer.clearLayers();
+  markers.clear();
+  for (const [k, p] of places) {
+    const n = p.fests.length;
+    const icon = L.divIcon({ className: 'pin', html: `<span>${n > 1 ? n : ''}</span>`, iconSize: [n > 1 ? 30 : 18, n > 1 ? 30 : 18] });
+    const fests = [...p.fests].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+    const m = L.marker([p.lat, p.lng], { icon, title: p.name })
+      .bindPopup(`<strong>${esc(p.name)}</strong><ul>${fests.map(f => `<li>${esc(f.nome)}${f.data ? ` <span>${esc(String(f.data).slice(0, 4))}</span>` : ''}</li>`).join('')}</ul>`)
+      .addTo(mapLayer);
+    markers.set(k, m);
+  }
+  const bounds = L.latLngBounds([...places.values()].map(p => [p.lat, p.lng]));
+  map.fitBounds(bounds, { padding: [48, 48], maxZoom: 9 });
+  setTimeout(() => map.invalidateSize(), 0);
+}
+
+// Passar o rato por um festival realça a cidade no mapa.
+$('#fest').addEventListener('mouseover', e => {
+  const k = e.target.closest('.fv')?.dataset.place;
+  markers.forEach((m, mk) => m.getElement()?.classList.toggle('hot', mk === k));
+});
+$('#fest').addEventListener('mouseleave', () => markers.forEach(m => m.getElement()?.classList.remove('hot')));
+
+// Procura as coordenadas da cidade no OpenStreetMap quando um festival é guardado.
+async function geocode(local) {
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt,es&q=' + encodeURIComponent(local);
+    const [hit] = await (await fetch(url, { headers: { 'Accept-Language': 'pt-PT' } })).json();
+    return hit ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
+  } catch {
+    return null;
+  }
 }
 
 function render() {
@@ -357,6 +423,14 @@ $('#form').addEventListener('submit', async e => {
       } else if (x.type === 'checks') data[x.k] = fd.getAll(x.k);
       else if (x.type === 'number') { const n = parseInt(fd.get(x.k), 10); data[x.k] = Number.isFinite(n) ? n : null; }
       else data[x.k] = String(fd.get(x.k) || '').trim() || null;
+    }
+    if (kind === 'festivais') {
+      // Mantém as coordenadas se a cidade não mudou; senão procura-as de novo.
+      const same = item && placeKey(item) === placeKey(data) && Number.isFinite(item.lat);
+      const pos = !data.local ? null : same ? { lat: item.lat, lng: item.lng } : await geocode(data.local);
+      data.lat = pos?.lat ?? null;
+      data.lng = pos?.lng ?? null;
+      if (data.local && !pos) toast('Não encontrei esta cidade no mapa. O festival fica guardado na mesma.');
     }
     if (kind === 'info') await api.saveInfo(data);
     else if (item) await api.update(kind, item.id, data);

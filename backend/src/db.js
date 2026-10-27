@@ -77,6 +77,10 @@ if (!membrosCols.has('data_entrada')) {
 }
 db.exec(`UPDATE membros SET estado = 'Tunante' WHERE estado = 'Tuna'`);
 
+const festivaisCols = new Set(db.prepare('PRAGMA table_info(festivais)').all().map(c => c.name));
+if (!festivaisCols.has('lat')) db.exec('ALTER TABLE festivais ADD COLUMN lat REAL');
+if (!festivaisCols.has('lng')) db.exec('ALTER TABLE festivais ADD COLUMN lng REAL');
+
 if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INTEGER');
 
 // A Magíster passou de opção à parte para hierarquia.

@@ -70,8 +70,12 @@ create table if not exists festivais (
   premios  jsonb not null default '[]',
   outros   text,
   notas    text,
+  lat      double precision,          -- coordenadas da cidade, para o mapa
+  lng      double precision,
   criado   timestamptz not null default now()
 );
+alter table festivais add column if not exists lat double precision;
+alter table festivais add column if not exists lng double precision;
 
 -- ---------- Quem pode editar ----------
 -- Só as contas cujo email esteja nesta tabela podem alterar o arquivo.

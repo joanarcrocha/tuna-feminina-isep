@@ -44,7 +44,7 @@
       <div class="stat"><b id="sFund">—</b><span>Fundada em</span></div>
       <div class="stat"><b id="sMemb">—</b><span>Membros no arquivo</span></div>
       <div class="stat"><b id="sFest">—</b><span>Festivais</span></div>
-      <div class="stat"><b id="sPrem">—</b><span>Prémios</span></div>
+      <div class="stat"><b id="sAnos">—</b><span>Anos de história</span></div>
     </div>
   </div>
 </header>
@@ -102,11 +102,14 @@
         <div>
           <p class="eyebrow">Capítulo quatro</p>
           <h2>Pelos <em class="s">festivais</em></h2>
-          <p class="sub">Cada festival em que participámos e os prémios que trouxemos para casa.</p>
+          <p class="sub">Cada festival em que participámos e as cidades por onde a tuna já passou.</p>
         </div>
         <button class="add" data-add="festivais">+ Adicionar festival</button>
       </div>
-      <ol class="fest" id="fest"></ol>
+      <div class="fest-grid">
+        <ol class="fest" id="fest"></ol>
+        <div class="fest-map" id="festMap" role="region" aria-label="Mapa das cidades dos festivais"></div>
+      </div>
     </div>
   </section>
 </main>
