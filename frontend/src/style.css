@@ -80,7 +80,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .edit-toggle[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .edit-toggle.subtle { border-color: transparent; background: none; color: var(--muted); }
 .who { font-size: 12px; font-weight: 600; color: var(--blush-ink); background: var(--blush); padding: 6px 12px; border-radius: 99px; white-space: nowrap; }
-@media (max-width: 680px) { .links { display: none; } .nav .wrap { justify-content: space-between; } }
+/* Telemóvel: a barra passa a duas linhas (marca e sessão em cima, secções por baixo), em vez de esconder o menu. */
+@media (max-width: 680px) {
+  .nav .wrap { flex-wrap: wrap; justify-content: space-between; align-content: center; gap: 4px 12px; height: auto; min-height: 56px; padding-block: 8px; }
+  .session { flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
+  .links { order: 3; flex: 1 0 100%; margin: 0; justify-content: center; gap: 4px; border-top: 1px solid var(--line); padding-top: 4px; }
+  .links a { padding: 6px 12px; font-size: 14px; }
+  html { scroll-padding-top: 112px; }
+}
+/* Ecrãs táteis: alvos de toque com pelo menos 40 px, e campos a 16 px para o iPhone não ampliar a página. */
+@media (hover: none) and (pointer: coarse), (max-width: 680px) {
+  .edit-toggle, .pill, .tool, .btn { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+  .nav .edit-toggle, .nav .who { min-height: 32px; }
+  .links a { padding: 6px 12px; }
+  input, select, textarea, .search { font-size: 16px; }
+}
 
 /* hero */
 .hero { position: relative; overflow: hidden; padding-block: clamp(64px, 11vw, 128px) 48px; }
