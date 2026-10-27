@@ -149,11 +149,81 @@ function renderLinks() {
     : `<li class="muted">Ainda não há ligações.</li>`;
 }
 
+// Partituras desenhadas no próprio site (PDF.js): páginas empilhadas à largura do ecrã, com zoom por pinça.
+// O visualizador de PDF dentro de uma moldura não funciona bem nos telemóveis (no iPhone só mostra a 1.ª página, pequena).
+let pdfjsLib = null;
+const carregarPdfjs = async () => {
+  if (pdfjsLib) return pdfjsLib;
+  const [lib, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]);
+  lib.GlobalWorkerOptions.workerSrc = worker.default;
+  return pdfjsLib = lib;
+};
+let pdfLimpar = null;
+let pdfId = 0;
+
+async function mostrarPdf(box, url) {
+  pdfLimpar?.();
+  const id = ++pdfId;
+  const vivo = () => id === pdfId && box.isConnected;
+  let ro, io, timer, doc;
+  pdfLimpar = () => { pdfId++; ro?.disconnect(); io?.disconnect(); clearTimeout(timer); doc?.destroy(); };
+
+  const desenhar = async () => {
+    const largura = Math.floor(box.clientWidth);
+    if (!largura || !vivo()) return;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const paginas = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      if (!vivo()) return;
+      const base = page.getViewport({ scale: 1 });
+      const canvas = document.createElement('canvas');
+      const vp = page.getViewport({ scale: (largura / base.width) * dpr });
+      canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
+      canvas.className = 'pdf-page';
+      canvas.style.aspectRatio = `${base.width} / ${base.height}`;
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `Partitura, página ${n} de ${doc.numPages}`);
+      paginas.push({ page, canvas, vp });
+    }
+    box.replaceChildren(...paginas.map(p => p.canvas));
+    io?.disconnect();
+    io = new IntersectionObserver(entradas => {
+      for (const e of entradas) {
+        if (!e.isIntersecting) continue;
+        const p = paginas.find(x => x.canvas === e.target);
+        if (!p || p.feita) continue;
+        p.feita = true;
+        io.unobserve(p.canvas);
+        p.page.render({ canvasContext: p.canvas.getContext('2d'), viewport: p.vp }).promise.catch(() => {});
+      }
+    }, { rootMargin: '800px 0px' });
+    paginas.forEach(p => io.observe(p.canvas));
+    box.dataset.largura = largura;
+  };
+
+  try {
+    const lib = await carregarPdfjs();
+    doc = await lib.getDocument({ url }).promise;
+    if (!vivo()) return;
+    await desenhar();
+    // Rodar o telemóvel ou redimensionar a janela: volta a desenhar com a nova largura, para ficar nítido.
+    ro = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { if (Math.abs(box.clientWidth - Number(box.dataset.largura || 0)) > 24) desenhar(); }, 250);
+    });
+    ro.observe(box);
+  } catch {
+    if (vivo()) box.innerHTML = '<p class="muted">Não foi possível mostrar a partitura aqui. Usa “Abrir a partitura em ecrã inteiro”.</p>';
+  }
+}
+
 const songTools = m => state.manage ? `<div class="item-tools on">
   <button class="tool" data-edit="musicas" data-id="${m.id}">Editar</button>
   <button class="tool danger" data-del="musicas" data-id="${m.id}">Apagar</button></div>` : '';
 
 function renderSongs() {
+  pdfLimpar?.();
   const m = state.musicas.find(x => x.id === state.sel);
   $('#resLinks').hidden = $('#songsHead').hidden = Boolean(m);
   return m ? renderSong(m) : renderList();
@@ -201,7 +271,9 @@ function renderSong(m) {
          ${state.manage ? `<button class="tool danger" data-delfile="${pdf.id}">Apagar</button>` : ''}</div>`
     : pdf
     ? `${pdfs.length > 1 ? `<div class="bar tight">${pdfs.map((f, i) => `<button class="pill" data-pdf="${i}" aria-pressed="${f === pdf}">${esc(f.nome.replace(/\.pdf$/i, ''))}</button>`).join('')}</div>` : ''}
-       <iframe class="pdf-frame" src="${esc(pdfSrc(pdf))}" title="Partitura: ${esc(pdf.nome)}"></iframe>
+       ${pdf.caminho
+         ? `<div class="pdf-pages" data-pdf="${esc(pdfSrc(pdf))}" aria-label="Partitura: ${esc(pdf.nome)}"><p class="muted">A carregar a partitura…</p></div>`
+         : `<iframe class="pdf-frame" src="${esc(pdfSrc(pdf))}" title="Partitura: ${esc(pdf.nome)}"></iframe>`}
        ${fileHref(pdf) ? `<a class="song-link" href="${esc(fileHref(pdf))}" target="_blank" rel="noopener">Abrir a partitura em ecrã inteiro <span aria-hidden="true">↗</span></a>` : ''}`
     : `<p class="muted">${files.length ? 'Não há partitura em PDF para este naipe.' : 'Ainda sem ficheiros.'}</p>`;
 
@@ -238,6 +310,8 @@ function renderSong(m) {
     </div>
     ${extra ? `<details class="panel more"><summary>Outros ficheiros <small>${others.length}</small></summary><ul class="files">${extra}</ul></details>` : ''}
     ${state.manage ? `<label class="upload"><input type="file" multiple data-upload="${m.id}">+ Adicionar ficheiros (partituras em PDF, áudio…)</label>` : ''}`;
+  const box = $('#songs .pdf-pages');
+  if (box) mostrarPdf(box, box.dataset.pdf);
 }
 
 function openLetra(id) {
