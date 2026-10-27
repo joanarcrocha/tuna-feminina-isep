@@ -131,6 +131,8 @@ Enquanto `SITE_PASSWORD` estiver preenchida no `.env`, quem visita `tufeisep.com
 
 Para abrir o site ao público, deixe `SITE_PASSWORD=` vazia e corra `docker compose up -d`.
 
+> Se o site está na Cloudflare (Pages ou GitHub Pages com o domínio na Cloudflare), o bloqueio faz-se com o Worker em `cloudflare/`. Veja `cloudflare/README.md`.
+
 ## Segurança
 
 - Só quem sabe a `ADMIN_PASSWORD` pode editar. Partilhe-a apenas com quem gere o arquivo e troque-a quando alguém sai: mude-a no `.env` e corra `docker compose up -d`.
