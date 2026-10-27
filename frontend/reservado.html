@@ -29,7 +29,7 @@
   <header class="res-head">
     <p class="eyebrow">Área reservada</p>
     <h1>O nosso <em class="s">repertório</em></h1>
-    <p class="sub">Pautas, letras e gravações para ensaiar, organizadas por Atuação, Pasecalles, Serenatas e Outras músicas.</p>
+    <p class="sub">Escolhe a música, depois o naipe: a partitura e a gravação ficam lado a lado para ensaiar.</p>
   </header>
 
   <!-- Sem sessão -->
@@ -44,7 +44,7 @@
 
   <!-- Com sessão -->
   <div id="app" hidden>
-    <section class="res-links" aria-labelledby="linksTitle">
+    <section class="res-links" id="resLinks" aria-labelledby="linksTitle">
       <div class="res-row">
         <h2 id="linksTitle">Ligações úteis</h2>
         <button class="add manage" id="addLink" hidden>+ Adicionar ligação</button>
@@ -53,11 +53,10 @@
     </section>
 
     <section class="res-songs" aria-labelledby="songsTitle">
-      <div class="res-row">
+      <div class="res-row" id="songsHead">
         <h2 id="songsTitle">Músicas</h2>
         <button class="add manage" id="addSong" hidden>+ Adicionar música</button>
       </div>
-      <div class="bar" id="catFilter"></div>
       <div class="songs" id="songs"></div>
     </section>
   </div>

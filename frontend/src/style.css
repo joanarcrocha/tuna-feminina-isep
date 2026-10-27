@@ -312,13 +312,32 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .gate-card h2 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
 .gate-card p { color: var(--muted); }
 
-.cat-group + .cat-group { margin-top: 40px; }
-.cat-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 30px; color: var(--accent); margin-bottom: 14px; }
-.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; align-items: start; }
-.song { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; display: grid; gap: 12px; }
-.song-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
-.song-head h4 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
-.song-notes { color: var(--muted); font-size: 14px; }
+.cat-group + .cat-group { margin-top: 36px; }
+.cat-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 30px; color: var(--accent); margin-bottom: 10px; }
+.song-search { display: block; margin: 0 0 28px; width: min(100%, 360px); padding: 10px 16px; font-size: 15px; }
+.song-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 640px; }
+.song-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: 600 16px/1.3 var(--body); cursor: pointer; transition: border-color .2s, color .2s; }
+.song-item:hover, .song-item:focus-visible { border-color: var(--accent); color: var(--accent); }
+.song-item span { color: var(--muted); font-size: 20px; }
+.song-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.back { border: 0; background: none; padding: 6px 0; color: var(--accent); font: 600 14px var(--body); cursor: pointer; }
+.back:hover { text-decoration: underline; }
+.song-title { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 8px; }
+.song-notes { color: var(--muted); font-size: 15px; margin: 0 0 18px; }
+.song-title + .bar, .song-notes + .bar { margin-top: 16px; }
+.pill.big { padding: 10px 22px; font-size: 15px; font-weight: 600; }
+.bar.tight { margin-bottom: 12px; }
+.viewer { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; margin-top: 8px; }
+.panel { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 18px; display: grid; gap: 12px; }
+.panel h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--blush-ink); }
+.pdf-frame { width: 100%; height: min(78vh, 900px); min-height: 420px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.yt { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+.yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.more { margin-top: 20px; }
+.more summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.more summary small { color: var(--muted); margin-left: 4px; }
+.more .files, .more > div { margin-top: 10px; }
+@media (max-width: 860px) { .viewer { grid-template-columns: 1fr; } .viewer .panel:last-child { order: -1; } .pdf-frame { height: 70vh; } }
 .files { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .file { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--bg); }
 .file-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -334,8 +353,4 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .upload { display: inline-flex; justify-self: start; align-items: center; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; padding: 6px 0; }
 .upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
-.file-group { border-top: 1px solid var(--line); padding-top: 8px; }
-.file-group summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
-.file-group summary small { color: var(--muted); font-weight: 500; margin-left: 4px; }
-.file-group .files { margin-top: 8px; }
 .file video { width: 100%; max-height: 360px; border-radius: 8px; background: #000; }

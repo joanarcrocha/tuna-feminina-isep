@@ -11,14 +11,14 @@ const CATEGORIAS = ['Atuação', 'Pasecalles', 'Serenatas', 'Outras músicas'];
 const BUCKET = 'musica';
 const MAX_BYTES = 50 * 1024 * 1024;
 
-const state = { role: null, manage: false, musicas: [], ficheiros: [], ligacoes: [], urls: {}, cat: 'Todas', q: '' };
+const state = { role: null, manage: false, musicas: [], ficheiros: [], ligacoes: [], urls: {}, q: '', sel: null, naipe: null, pdf: 0 };
 
 const SCHEMAS = {
   musicas: { title: 'música', fields: [
     { k: 'titulo', l: 'Título', req: true },
     { k: 'categoria', l: 'Categoria', type: 'select', opts: CATEGORIAS, req: true },
     { k: 'notas', l: 'Notas', hint: 'Por exemplo: tom, quem faz o solo, em que parte da atuação entra.' },
-    { k: 'link', l: 'Ligação', type: 'url', hint: 'Opcional. Uma gravação no YouTube ou uma pasta no Drive.' },
+    { k: 'link', l: 'Ligação do YouTube', type: 'url', hint: 'Opcional. A gravação que aparece ao lado da partitura.' },
     { k: 'letra', l: 'Letra', type: 'textarea' },
   ]},
   ligacoes: { title: 'ligação', fields: [
@@ -54,6 +54,16 @@ const kindOf = f => {
   return 'Ficheiro';
 };
 const fmtSize = b => !b ? '' : b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+const ytId = u => (String(u || '').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/) || [])[1] || null;
+const driveId = u => (String(u || '').match(/\/d\/([\w-]+)|[?&]id=([\w-]+)/) || []).slice(1).find(Boolean) || null;
+const isPdf = f => f.tipo === 'application/pdf' || /\.pdf$/i.test(f.nome || '');
+// O naipe é a última pasta do Drive (por exemplo "Vozes · Sopranos" -> "Sopranos").
+const naipeOf = f => (f.grupo || 'Geral').split(' · ').pop();
+const NAIPE_ORDEM = [/sopran/i, /mezz/i, /contralt/i];
+const naipeRank = n => { const i = NAIPE_ORDEM.findIndex(r => r.test(n)); return i < 0 ? NAIPE_ORDEM.length : i; };
+const fileHref = f => f.caminho ? state.urls[f.caminho] : f.url;
+// PDF no site (ligação temporária) ou pré-visualização do Drive.
+const pdfSrc = f => f.caminho ? state.urls[f.caminho] : (driveId(f.url) ? `https://drive.google.com/file/d/${driveId(f.url)}/preview` : null);
 const isUrl = s => /^https?:\/\/\S+$/i.test(s);
 
 /* ---------- arranque ---------- */
@@ -115,87 +125,101 @@ function renderLinks() {
     : `<li class="muted">Ainda não há ligações.</li>`;
 }
 
-function renderSongs() {
-  const counts = Object.fromEntries(CATEGORIAS.map(c => [c, state.musicas.filter(m => m.categoria === c).length]));
-  $('#catFilter').innerHTML = ['Todas', ...CATEGORIAS].map(c =>
-    `<button class="pill" data-cat="${c}" aria-pressed="${state.cat === c}">${c}<small>${c === 'Todas' ? state.musicas.length : counts[c]}</small></button>`).join('') +
-    `<input class="search" id="songSearch" type="search" placeholder="Procurar música" aria-label="Procurar música" value="${esc(state.q)}">`;
+const songTools = m => state.manage ? `<div class="item-tools on">
+  <button class="tool" data-edit="musicas" data-id="${m.id}">Editar</button>
+  <button class="tool danger" data-del="musicas" data-id="${m.id}">Apagar</button></div>` : '';
 
+function renderSongs() {
+  const m = state.musicas.find(x => x.id === state.sel);
+  $('#resLinks').hidden = $('#songsHead').hidden = Boolean(m);
+  return m ? renderSong(m) : renderList();
+}
+
+// Só os nomes, agrupados por categoria. Carregar numa música abre-a.
+function renderList() {
   const q = state.q.toLowerCase();
-  const list = state.musicas.filter(m =>
-    (state.cat === 'Todas' || m.categoria === state.cat) &&
-    (!q || [m.titulo, m.notas, m.letra].join(' ').toLowerCase().includes(q)));
+  const list = state.musicas.filter(m => !q || m.titulo.toLowerCase().includes(q));
+  const search = `<input class="search song-search" id="songSearch" type="search" placeholder="Procurar música" aria-label="Procurar música" value="${esc(state.q)}">`;
 
   if (!list.length) {
-    $('#songs').innerHTML = `<div class="empty"><strong>${state.musicas.length ? 'Nenhuma música corresponde.' : 'O repertório ainda está vazio.'}</strong>${
-      state.musicas.length ? 'Experimenta outra categoria ou outra pesquisa.'
+    $('#songs').innerHTML = search + `<div class="empty"><strong>${state.musicas.length ? 'Nenhuma música corresponde.' : 'O repertório ainda está vazio.'}</strong>${
+      state.musicas.length ? 'Experimenta outra pesquisa.'
       : state.manage ? 'Carrega em “+ Adicionar música” para começar.' : 'A Direção musical vai juntar aqui as músicas.'}</div>`;
     return;
   }
-
-  // Agrupado por categoria, pela ordem do repertório.
-  $('#songs').innerHTML = CATEGORIAS
+  $('#songs').innerHTML = search + CATEGORIAS
     .map(c => [c, list.filter(m => m.categoria === c)])
     .filter(([, ms]) => ms.length)
     .map(([c, ms]) => `
       <section class="cat-group">
         <h3 class="cat-title">${c}</h3>
-        <div class="song-grid">${ms.map(songCard).join('')}</div>
+        <ul class="song-list">${ms.map(m => `<li><button class="song-item" data-song="${m.id}">${esc(m.titulo)}<span aria-hidden="true">›</span></button></li>`).join('')}</ul>
       </section>`).join('');
 }
 
-function songCard(m) {
+// Uma música: escolher o naipe, ver a partitura (PDF) e ouvir a gravação (YouTube).
+function renderSong(m) {
   const files = state.ficheiros.filter(f => f.musica_id === m.id);
-  return `
-    <article class="song">
-      <div class="song-head">
-        <h4>${esc(m.titulo)}</h4>
-        ${state.manage ? `<div class="item-tools on">
-          <button class="tool" data-edit="musicas" data-id="${m.id}">Editar</button>
-          <button class="tool danger" data-del="musicas" data-id="${m.id}">Apagar</button></div>` : ''}
-      </div>
-      ${m.notas ? `<p class="song-notes">${esc(m.notas)}</p>` : ''}
-      ${files.length ? fileGroups(files) : `<p class="muted">Ainda sem ficheiros.</p>`}
-      ${m.link && isUrl(m.link) ? `<a class="song-link" href="${esc(m.link)}" target="_blank" rel="noopener">${m.link.includes('drive.google.com') ? 'Abrir a pasta no Drive' : 'Abrir ligação'} <span aria-hidden="true">↗</span></a>` : ''}
-      ${m.letra ? `<details class="letra"><summary>Letra</summary><div>${esc(m.letra)}</div></details>` : ''}
-      ${state.manage ? `<label class="upload"><input type="file" multiple data-upload="${m.id}">+ Adicionar ficheiros</label>` : ''}
-    </article>`;
-}
+  const naipes = [...new Set(files.map(naipeOf))].sort((a, b) => naipeRank(a) - naipeRank(b) || a.localeCompare(b, 'pt'));
+  if (!naipes.includes(state.naipe)) state.naipe = naipes[0] || null;
+  const doNaipe = files.filter(f => naipeOf(f) === state.naipe);
+  const pdfs = doNaipe.filter(f => isPdf(f) && pdfSrc(f));
+  const others = doNaipe.filter(f => !pdfs.includes(f));
+  const pdf = pdfs[Math.min(state.pdf, pdfs.length - 1)];
+  const yt = ytId(m.link);
 
-// Ficheiros agrupados pela pasta de origem (por exemplo "Vozes · Sopranos").
-// Com muitos ficheiros, cada grupo abre e fecha para o cartão não ficar enorme.
-function fileGroups(files) {
-  const groups = new Map();
-  for (const f of [...files].sort((a, b) => String(a.grupo || '').localeCompare(String(b.grupo || ''), 'pt') || a.nome.localeCompare(b.nome, 'pt'))) {
-    const g = f.grupo || 'Geral';
-    if (!groups.has(g)) groups.set(g, []);
-    groups.get(g).push(f);
-  }
-  if (groups.size === 1 && files.length <= 6) return `<ul class="files">${files.map(fileItem).join('')}</ul>`;
-  return [...groups].map(([g, fs]) => `
-    <details class="file-group"${files.length <= 6 ? ' open' : ''}>
-      <summary>${esc(g)} <small>${fs.length}</small></summary>
-      <ul class="files">${fs.map(fileItem).join('')}</ul>
-    </details>`).join('');
-}
+  const partitura = pdf
+    ? `${pdfs.length > 1 ? `<div class="bar tight">${pdfs.map((f, i) => `<button class="pill" data-pdf="${i}" aria-pressed="${f === pdf}">${esc(f.nome.replace(/\.pdf$/i, ''))}</button>`).join('')}</div>` : ''}
+       <iframe class="pdf-frame" src="${esc(pdfSrc(pdf))}" title="Partitura: ${esc(pdf.nome)}"></iframe>
+       ${fileHref(pdf) ? `<a class="song-link" href="${esc(fileHref(pdf))}" target="_blank" rel="noopener">Abrir a partitura em ecrã inteiro <span aria-hidden="true">↗</span></a>` : ''}`
+    : `<p class="muted">${files.length ? 'Não há partitura em PDF para este naipe.' : 'Ainda sem ficheiros.'}</p>`;
 
-function fileItem(f) {
-  // Copiado para o site (ligação temporária) ou deixado no Drive (ligação fixa).
-  const url = f.caminho ? state.urls[f.caminho] : f.url;
-  const audio = f.caminho && (f.tipo || '').startsWith('audio/');
-  return `
-    <li class="file">
-      <div class="file-row">
-        <span class="file-kind">${kindOf(f)}</span>
-        <span class="file-name" title="${esc(f.nome)}">${esc(f.nome)}</span>
-        <span class="file-size">${fmtSize(f.tamanho)}</span>
-        ${url ? `<a class="tool" href="${esc(url)}" target="_blank" rel="noopener">${f.caminho ? 'Abrir' : 'Drive ↗'}</a>` : ''}
-        ${state.manage ? `<button class="tool danger" data-delfile="${f.id}">Apagar</button>` : ''}
-      </div>
-      ${audio && url ? `<audio controls preload="none" src="${esc(url)}"></audio>` : ''}
-      ${f.caminho && f.tipo === 'video/mp4' && url ? `<video controls preload="none" playsinline src="${esc(url)}"></video>` : ''}
+  const gravacao = yt
+    ? `<div class="yt"><iframe src="https://www.youtube-nocookie.com/embed/${yt}" title="Gravação: ${esc(m.titulo)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+    : `<p class="muted">Ainda sem gravação no YouTube.${m.link && isUrl(m.link) ? ` <a href="${esc(m.link)}" target="_blank" rel="noopener">Abrir ligação ↗</a>` : ''}</p>`;
+
+  const extra = others.map(f => {
+    const url = fileHref(f);
+    return `<li class="file"><div class="file-row">
+      <span class="file-kind">${kindOf(f)}</span><span class="file-name" title="${esc(f.nome)}">${esc(f.nome)}</span>
+      ${url ? `<a class="tool" href="${esc(url)}" target="_blank" rel="noopener">${f.caminho ? 'Abrir' : 'Drive ↗'}</a>` : ''}
+      ${state.manage ? `<button class="tool danger" data-delfile="${f.id}">Apagar</button>` : ''}</div>
+      ${f.caminho && url && (f.tipo || '').startsWith('audio/') ? `<audio controls preload="none" src="${esc(url)}"></audio>` : ''}
     </li>`;
+  }).join('');
+
+  $('#songs').innerHTML = `
+    <div class="song-top">
+      <button class="back" data-back>← Todas as músicas</button>
+      ${songTools(m)}
+    </div>
+    <h2 class="song-title">${esc(m.titulo)}</h2>
+    ${m.notas ? `<p class="song-notes">${esc(m.notas)}</p>` : ''}
+    ${naipes.length ? `<div class="bar" role="group" aria-label="Naipe">${naipes.map(n =>
+      `<button class="pill big" data-naipe="${esc(n)}" aria-pressed="${n === state.naipe}">${esc(n)}</button>`).join('')}</div>` : ''}
+    <div class="viewer">
+      <section class="panel"><h3>Partitura</h3>${partitura}</section>
+      <section class="panel"><h3>Ouvir</h3>${gravacao}</section>
+    </div>
+    ${extra ? `<details class="panel more"><summary>Outros ficheiros <small>${others.length}</small></summary><ul class="files">${extra}</ul></details>` : ''}
+    ${m.letra ? `<details class="panel more letra"><summary>Letra</summary><div>${esc(m.letra)}</div></details>` : ''}
+    ${state.manage ? `<label class="upload"><input type="file" multiple data-upload="${m.id}">+ Adicionar ficheiros (partituras em PDF, áudio…)</label>` : ''}`;
 }
+
+function openSong(id) {
+  state.sel = id; state.naipe = null; state.pdf = 0;
+  const hash = id ? `#m=${id}` : '';
+  if (location.hash !== hash) history.pushState(null, '', hash || location.pathname + location.search);
+  renderSongs();
+  scrollTo({ top: 0 });
+}
+// Ligação direta e botão "voltar" do navegador: a música aberta fica no endereço (#m=ID).
+function fromHash() {
+  state.sel = Number((location.hash.match(/^#m=(\d+)$/) || [])[1]) || null;
+  state.naipe = null; state.pdf = 0;
+  if (state.role) renderSongs();
+}
+addEventListener('popstate', fromHash);
 
 /* ---------- formulários ---------- */
 let current = null;
@@ -206,7 +230,7 @@ function openForm(kind, item) {
     const id = 'f_' + x.k, val = v[x.k] ?? '';
     let input;
     if (x.type === 'textarea') input = `<textarea id="${id}" name="${x.k}">${esc(val)}</textarea>`;
-    else if (x.type === 'select') input = `<select id="${id}" name="${x.k}">${x.opts.map(o => `<option${o === (val || (state.cat !== 'Todas' ? state.cat : '')) ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (x.type === 'select') input = `<select id="${id}" name="${x.k}">${x.opts.map(o => `<option${o === (val || '') ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
     else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'url' ? ' placeholder="https://"' : ''}>`;
     return `<div class="field"><label for="${id}">${x.l}${x.req ? ' *' : ''}</label>${input}${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
   };
@@ -316,7 +340,10 @@ async function removeFile(id) {
 document.addEventListener('click', e => {
   const t = e.target.closest('button');
   if (!t) return;
-  if (t.dataset.cat) { state.cat = t.dataset.cat; renderSongs(); }
+  if (t.dataset.song) openSong(Number(t.dataset.song));
+  else if (t.dataset.back !== undefined) openSong(null);
+  else if (t.dataset.naipe) { state.naipe = t.dataset.naipe; state.pdf = 0; renderSongs(); }
+  else if (t.dataset.pdf) { state.pdf = Number(t.dataset.pdf); renderSongs(); }
   else if (t.dataset.edit) openForm(t.dataset.edit, state[t.dataset.edit].find(x => String(x.id) === t.dataset.id));
   else if (t.dataset.del) { if (armed(t)) removeRecord(t.dataset.del, Number(t.dataset.id)); }
   else if (t.dataset.delfile) { if (armed(t)) removeFile(Number(t.dataset.delfile)); }
@@ -345,4 +372,5 @@ $('#logoutBtn').addEventListener('click', async () => {
   location.href = './';
 });
 
+fromHash();
 start();
