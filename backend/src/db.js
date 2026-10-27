@@ -70,6 +70,8 @@ if (!membrosCols.has('data_entrada')) {
 }
 db.exec(`UPDATE membros SET estado = 'Tunante' WHERE estado = 'Tuna'`);
 
+if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INTEGER');
+
 // A Magíster passou de opção à parte para hierarquia.
 if (membrosCols.has('magister')) {
   db.exec(`UPDATE membros SET estado = 'Magíster' WHERE magister = 1`);

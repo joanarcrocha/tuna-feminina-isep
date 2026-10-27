@@ -37,6 +37,7 @@ function expressApi() {
     create: (kind, data) => request('POST', '/' + kind, data),
     update: (kind, id, data) => request('PUT', `/${kind}/${id}`, data),
     remove: (kind, id) => request('DELETE', `/${kind}/${id}`),
+    reorder: items => request('PATCH', '/membros/ordem', items),
     upload(file) {
       const fd = new FormData();
       fd.append('ficheiro', file);
@@ -78,6 +79,11 @@ function supabaseApi() {
       const { count, error } = await sb.from(kind).delete({ count: 'exact' }).eq('id', id);
       check({ error });
       if (!count) throw fail(SESSION_ERROR, 401);
+    },
+    // Muda a ordem dos membros: [{id, ordem}, ...]
+    async reorder(items) {
+      await Promise.all(items.map(async ({ id, ordem }) =>
+        check(await sb.from('membros').update({ ordem }).eq('id', id).select('id').single())));
     },
     async upload(file) {
       if (!EXT[file.type]) throw fail('Formato não suportado. Use JPG, PNG, WEBP ou GIF.', 400);

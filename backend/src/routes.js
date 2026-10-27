@@ -80,6 +80,16 @@ api.post('/uploads', requireAuth, upload.single('ficheiro'), (req, res) => {
   res.status(201).json({ ficheiro: req.file.filename });
 });
 
+// Muda a ordem dos membros: recebe [{id, ordem}, ...] e grava tudo de uma vez.
+api.patch('/membros/ordem', requireAuth, (req, res) => {
+  const items = Array.isArray(req.body) ? req.body : [];
+  const set = db.prepare('UPDATE membros SET ordem = ? WHERE id = ?');
+  db.transaction(() => {
+    for (const { id, ordem } of items) set.run(Number.parseInt(ordem, 10), Number.parseInt(id, 10));
+  })();
+  res.status(204).end();
+});
+
 api.get('/:recurso', getResource, (req, res) => {
   const rows = db.prepare(`SELECT * FROM ${req.params.recurso} ORDER BY id`).all();
   res.json(rows.map(r => parse(req.spec, r)));
@@ -92,6 +102,10 @@ api.post('/:recurso', requireAuth, getResource, (req, res) => {
     .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(c => '@' + c).join(', ')})`)
     .run(data);
   umaMagister(table, lastInsertRowid, data);
+  // Um membro novo entra no fim da lista.
+  if (table === 'membros') {
+    db.prepare('UPDATE membros SET ordem = (SELECT COALESCE(MAX(ordem), 0) + 1 FROM membros) WHERE id = ?').run(lastInsertRowid);
+  }
   res.status(201).json(parse(spec, db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(lastInsertRowid)));
 });
 

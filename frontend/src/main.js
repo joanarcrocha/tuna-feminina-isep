@@ -54,7 +54,7 @@ const state = { info: {}, membros: [], marcos: [], fotos: [], festivais: [], loa
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
 const initials = m => (m.nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 const fmtEntrada = ano => ano ? esc(ano) : '—';
-const tools = (kind, id) => `<div class="item-tools"><button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
+const tools = (kind, id, extra = '') => `<div class="item-tools">${extra}<button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
 const fmtDate = d => {
   if (!d) return { big: '—', small: '' };
   const dt = new Date(d + 'T12:00:00');
@@ -102,6 +102,45 @@ const daTuna = m => m.estado !== CALOIRA;
 const inFilter = (m, filtro) =>
   filtro === 'Todas' ? daTuna(m) : filtro === 'Tunante' ? m.estado === 'Tunante' || isMagister(m) : m.estado === filtro;
 
+// Ordem da hierarquia: a Magíster primeiro, depois o campo "ordem" (definido no modo de edição).
+const byOrder = (a, b) =>
+  Number(isMagister(b)) - Number(isMagister(a)) ||
+  (a.ordem ?? Infinity) - (b.ordem ?? Infinity) ||
+  String(a.data_entrada || '9999').localeCompare(String(b.data_entrada || '9999')) ||
+  String(a.nome).localeCompare(b.nome, 'pt');
+
+const moveTools = (m, i, list) => isMagister(m) ? '' : `
+  <button class="tool" data-move="-1" data-id="${m.id}" aria-label="Subir ${esc(m.nome)}"${i === 0 || isMagister(list[i - 1]) ? ' disabled' : ''}>↑</button>
+  <button class="tool" data-move="1" data-id="${m.id}" aria-label="Descer ${esc(m.nome)}"${i === list.length - 1 ? ' disabled' : ''}>↓</button>`;
+
+let visibleMembers = [];
+async function moveMember(id, dir) {
+  const list = visibleMembers.filter(m => !isMagister(m));
+  const i = list.findIndex(m => String(m.id) === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+
+  // Numera toda a hierarquia de seguida (1, 2, 3…) e depois troca os dois vizinhos.
+  const changes = new Map();
+  [...state.membros].filter(m => !isMagister(m)).sort(byOrder)
+    .forEach((m, k) => { if (m.ordem !== k + 1) changes.set(m.id, k + 1); });
+  const ordem = m => changes.get(m.id) ?? m.ordem;
+  const [a, b] = [list[i], list[j]];
+  const [oa, ob] = [ordem(a), ordem(b)];
+  changes.set(a.id, ob);
+  changes.set(b.id, oa);
+
+  const before = state.membros.map(m => ({ ...m }));
+  state.membros = state.membros.map(m => changes.has(m.id) ? { ...m, ordem: changes.get(m.id) } : m);
+  render();
+  try {
+    await api.reorder([...changes].map(([id, ordem]) => ({ id, ordem })));
+  } catch (err) {
+    state.membros = before;
+    render();
+    handleError(err);
+  }
+}
+
 function renderMembros() {
   const counts = { Todas: state.membros.filter(daTuna).length };
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
@@ -119,8 +158,9 @@ function renderMembros() {
   const list = state.membros
     .filter(m => inFilter(m, state.mFiltro))
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
-    .sort((a, b) => Number(isMagister(b)) - Number(isMagister(a)) || String(a.data_entrada || '9999').localeCompare(String(b.data_entrada || '9999')) || String(a.nome).localeCompare(b.nome, 'pt'));
-  $('#members').innerHTML = list.length ? list.map(m => `
+    .sort(byOrder);
+  visibleMembers = list;
+  $('#members').innerHTML = list.length ? list.map((m, i) => `
     <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}">
       <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>
       <div class="mb-body">
@@ -130,7 +170,7 @@ function renderMembros() {
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>
           <div><dt>Entrada</dt><dd>${fmtEntrada(m.data_entrada)}</dd></div>
         </dl>
-        ${tools('membros', m.id)}
+        ${tools('membros', m.id, moveTools(m, i, list))}
       </div>
     </article>`).join('')
     : `<div class="empty" style="grid-column:1/-1"><strong>${state.membros.length ? 'Ninguém corresponde a este filtro.' : 'Ainda não há membros no arquivo.'}</strong>${state.membros.length ? 'Experimente outra hierarquia ou outra pesquisa.' : 'Adicione cada membro com a fotografia, os instrumentos, o naipe e a data de entrada.'}</div>`;
@@ -283,7 +323,11 @@ $('#form').addEventListener('submit', async e => {
     }
     if (kind === 'info') await api.saveInfo(data);
     else if (item) await api.update(kind, item.id, data);
-    else await api.create(kind, data);
+    else {
+      // Um membro novo entra no fim da hierarquia.
+      if (kind === 'membros') data.ordem = Math.max(0, ...state.membros.map(m => m.ordem ?? 0)) + 1;
+      await api.create(kind, data);
+    }
     await load(kind); render();
     $('#dlg').close();
     toast('Guardado no arquivo');
@@ -323,6 +367,7 @@ document.addEventListener('click', e => {
   else if (t.dataset.add) openForm(t.dataset.add);
   else if (t.dataset.edit) openForm(t.dataset.edit, t.dataset.edit === 'info' ? state.info : state[t.dataset.edit].find(x => String(x.id) === t.dataset.id));
   else if (t.dataset.del) armDelete(t);
+  else if (t.dataset.move) moveMember(t.dataset.id, Number(t.dataset.move));
   else if (t.dataset.lb) openLb(+t.dataset.lb);
 });
 document.addEventListener('input', e => { if (e.target.id === 'mSearch') { state.q = e.target.value; render(); } });

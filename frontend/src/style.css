@@ -125,6 +125,7 @@ body.editing .add { display: inline-flex; }
 .item-tools { display: none; gap: 6px; }
 body.editing .item-tools { display: flex; }
 .tool { border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; cursor: pointer; }
+.tool:disabled { opacity: .35; cursor: default; }
 .tool.danger.armed { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
 @supports (animation-timeline: view()) {
