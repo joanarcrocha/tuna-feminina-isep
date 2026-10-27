@@ -47,6 +47,13 @@ drop trigger if exists so_uma_magister on membros;
 create trigger so_uma_magister before insert or update of estado on membros
   for each row execute function so_uma_magister();
 
+create table if not exists carrossel (
+  id         bigint generated always as identity primary key,
+  foto       text not null,
+  descricao  text,
+  criado     timestamptz not null default now()
+);
+
 create table if not exists fotos (
   id        bigint generated always as identity primary key,
   ficheiro  text not null,
@@ -80,7 +87,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['info', 'marcos', 'membros', 'fotos', 'festivais'] loop
+  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais'] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "leitura publica" on %I', t);
     execute format('drop policy if exists "escrita editores" on %I', t);

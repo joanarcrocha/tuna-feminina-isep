@@ -37,6 +37,13 @@ db.exec(`
     criado        TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS carrossel (
+    id         INTEGER PRIMARY KEY,
+    foto       TEXT NOT NULL,
+    descricao  TEXT,
+    criado     TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS fotos (
     id        INTEGER PRIMARY KEY,
     ficheiro  TEXT NOT NULL,

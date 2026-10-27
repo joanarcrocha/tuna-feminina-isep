@@ -18,11 +18,9 @@ const SCHEMAS = {
     { k: 'lema', l: 'Lema ou frase da tuna' },
     { k: 'historia', l: 'A história', type: 'textarea', hint: 'Separe os parágrafos com uma linha em branco.' },
   ]},
-  marcos: { title: 'Marco', fields: [
-    { k: 'ano', l: 'Ano', type: 'number', req: true },
-    { k: 'titulo', l: 'Título', req: true },
-    { k: 'texto', l: 'O que aconteceu', type: 'textarea' },
-    { k: 'foto', l: 'Fotografia', type: 'image' },
+  carrossel: { title: 'Fotografia da história', fields: [
+    { k: 'foto', l: 'Fotografia', type: 'image', req: true },
+    { k: 'descricao', l: 'Descrição curta', hint: 'Por exemplo: Primeira atuação na esplanada da aeISEP, 1991.' },
   ]},
   membros: { title: 'Membro', fields: [
     { k: 'nome', l: 'Nome', req: true },
@@ -46,9 +44,9 @@ const SCHEMAS = {
     { k: 'notas', l: 'Notas', type: 'textarea' },
   ]},
 };
-const KINDS = ['marcos', 'membros', 'fotos', 'festivais'];
+const KINDS = ['carrossel', 'membros', 'fotos', 'festivais'];
 
-const state = { info: {}, membros: [], marcos: [], fotos: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', fFiltro: 'Todos', q: '' };
+const state = { info: {}, membros: [], carrossel: [], fotos: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', fFiltro: 'Todos', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -81,19 +79,60 @@ function renderHistoria() {
       : `<div class="empty"><strong>A história ainda está por escrever.</strong>Conte como a tuna nasceu, quem a fundou e o que a move. Carregue em “Editar arquivo” para começar.</div>`) +
     `<div class="item-tools"><button class="tool" data-edit="info" data-id="info">Editar texto</button></div>`;
 
-  const ms = [...state.marcos].sort((a, b) => (a.ano || 0) - (b.ano || 0));
-  $('#timeline').innerHTML = ms.length ? ms.map(m => `
-    <li class="mk reveal">
-      <div class="ano">${esc(m.ano)}</div>
-      <div>
-        <h3>${esc(m.titulo)}</h3>
-        ${m.texto ? `<p>${esc(m.texto)}</p>` : ''}
-        ${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.titulo)}" loading="lazy">` : ''}
-        ${tools('marcos', m.id)}
-      </div>
-    </li>`).join('')
-    : `<li class="empty"><strong>Sem marcos registados.</strong>A fundação, o primeiro festival, a primeira digressão: cada ano importante tem lugar aqui.</li>`;
+  renderCarrossel();
 }
+
+/* ---------- carrossel da história ---------- */
+const SLIDE_MS = 5000;
+let slideIdx = 0, slideTimer = null, slidePaused = false, carouselKey = '';
+
+function renderCarrossel() {
+  const items = [...state.carrossel].sort((a, b) => a.id - b.id);
+  // Só redesenha quando as fotos ou o modo de edição mudam, para não interromper a passagem.
+  const key = JSON.stringify([items.map(s => [s.id, s.foto, s.descricao]), state.edit]);
+  if (key === carouselKey) return;
+  carouselKey = key;
+  const el = $('#carousel');
+  clearInterval(slideTimer);
+  if (!items.length) {
+    el.classList.add('is-empty');
+    el.innerHTML = `<div class="empty"><strong>Ainda não há fotografias.</strong>Carregue em “Editar arquivo” e depois em “+ Adicionar fotografia”. As fotos passam aqui sozinhas, com uma pequena descrição.</div>`;
+    return;
+  }
+  el.classList.remove('is-empty');
+  if (slideIdx >= items.length) slideIdx = 0;
+  el.innerHTML = items.map((s, i) => `
+      <figure class="slide${i === slideIdx ? ' on' : ''}" aria-hidden="${i !== slideIdx}">
+        <img src="${fileUrl(s.foto)}" alt="${esc(s.descricao || 'Fotografia da história da tuna')}"${i ? ' loading="lazy"' : ''}>
+        ${s.descricao ? `<figcaption>${esc(s.descricao)}</figcaption>` : ''}
+        ${tools('carrossel', s.id)}
+      </figure>`).join('') +
+    (items.length > 1 ? `
+      <button class="car-btn prev" data-car="-1" aria-label="Fotografia anterior">‹</button>
+      <button class="car-btn next" data-car="1" aria-label="Fotografia seguinte">›</button>
+      <div class="dots">${items.map((_, i) => `<button class="dot" data-dot="${i}" aria-label="Fotografia ${i + 1}" aria-current="${i === slideIdx}"></button>`).join('')}</div>` : '');
+  startSlides(items.length);
+}
+
+function startSlides(n) {
+  clearInterval(slideTimer);
+  if (n > 1) slideTimer = setInterval(() => { if (!slidePaused && !document.hidden) showSlide(slideIdx + 1); }, SLIDE_MS);
+}
+
+function showSlide(i, restart) {
+  const slides = document.querySelectorAll('#carousel .slide');
+  if (!slides.length) return;
+  slideIdx = (i + slides.length) % slides.length;
+  slides.forEach((s, k) => { s.classList.toggle('on', k === slideIdx); s.setAttribute('aria-hidden', k !== slideIdx); });
+  document.querySelectorAll('#carousel .dot').forEach((d, k) => d.setAttribute('aria-current', k === slideIdx));
+  if (restart) startSlides(slides.length);
+}
+
+// Pausa enquanto o rato ou o teclado estão no carrossel.
+$('#carousel').addEventListener('mouseenter', () => { slidePaused = true; });
+$('#carousel').addEventListener('mouseleave', () => { slidePaused = false; });
+$('#carousel').addEventListener('focusin', () => { slidePaused = true; });
+$('#carousel').addEventListener('focusout', () => { slidePaused = false; });
 
 // As caloiras ainda não pertencem à tuna: o público vê uma mensagem, só quem edita vê a lista.
 const CALOIRA = 'Caloira';
@@ -232,13 +271,13 @@ async function load(kind) {
 
 async function loadAll() {
   const status = $('#status');
-  try {
-    await Promise.all(['info', ...KINDS].map(load));
-    state.loaded = true;
-    status.textContent = 'Arquivo atualizado';
-  } catch {
-    status.textContent = 'Não foi possível ligar ao arquivo. Tente recarregar a página.';
-  }
+  // Cada secção carrega por si: se uma falhar, as outras continuam a aparecer.
+  const results = await Promise.allSettled(['info', ...KINDS].map(load));
+  const failed = results.filter(r => r.status === 'rejected').length;
+  state.loaded = failed < results.length;
+  status.textContent = !failed ? 'Arquivo atualizado'
+    : state.loaded ? 'Parte do arquivo não carregou. Tente recarregar a página.'
+    : 'Não foi possível ligar ao arquivo. Tente recarregar a página.';
   render();
 }
 
@@ -368,6 +407,8 @@ document.addEventListener('click', e => {
   else if (t.dataset.edit) openForm(t.dataset.edit, t.dataset.edit === 'info' ? state.info : state[t.dataset.edit].find(x => String(x.id) === t.dataset.id));
   else if (t.dataset.del) armDelete(t);
   else if (t.dataset.move) moveMember(t.dataset.id, Number(t.dataset.move));
+  else if (t.dataset.car) showSlide(slideIdx + Number(t.dataset.car), true);
+  else if (t.dataset.dot) showSlide(Number(t.dataset.dot), true);
   else if (t.dataset.lb) openLb(+t.dataset.lb);
 });
 document.addEventListener('input', e => { if (e.target.id === 'mSearch') { state.q = e.target.value; render(); } });
