@@ -241,7 +241,11 @@ footer .wrap { display: flex; align-items: center; justify-content: space-betwee
 .social a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px 8px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; text-decoration: none; transition: color .25s, border-color .25s, transform .25s cubic-bezier(.2,.7,.2,1); }
 .social a:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
 .social svg { width: 18px; height: 18px; flex: none; }
+.social a.is-contact { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.social a.is-contact:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .social--icons { margin-top: 0; gap: 6px; }
+.form-intro { color: var(--muted); font-size: 14px; margin-top: -8px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .social--icons a { padding: 9px; }
 .status { font-size: 13px; color: var(--muted); }
 

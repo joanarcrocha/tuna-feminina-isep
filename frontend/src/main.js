@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api, fileUrl } from './api.js';
+import { mountContact } from './contact.js';
 import { mountStrings } from './strings.js';
 
 const $ = s => document.querySelector(s);
@@ -503,5 +504,6 @@ $('#lb').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(-1);
 $('#lb').addEventListener('click', e => { if (e.target.id === 'lb') $('#lb').close(); });
 
 mountStrings($('#strings'), $('.hero'));
+mountContact();
 render();
 loadAll();

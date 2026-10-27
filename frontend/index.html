@@ -44,6 +44,8 @@
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg>Facebook</a>
       <a href="https://www.tiktok.com/@tufeisep" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 3c.3 2.3 1.6 3.8 3.9 4v2.9c-1.4.1-2.7-.3-3.9-1v5.6c0 3.6-2.9 6-6.1 5.5-2.5-.4-4.4-2.6-4.3-5.2.1-3.2 3-5.5 6.2-4.9v3c-1.5-.5-3.2.4-3.3 2-.1 1.3.9 2.4 2.2 2.4 1.3 0 2.3-1 2.3-2.4V3h3z"/></svg>TikTok</a>
+      <a href="#contacto" class="is-contact" data-contact>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>Contacto</a>
     </nav>
     </div>
     <img class="hero-logo" src="/logo.webp" alt="Emblema da Tuna Feminina do Instituto Superior de Engenharia do Porto, fundada em 1991" width="300" height="300">
@@ -135,10 +137,43 @@
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a>
       <a href="https://www.tiktok.com/@tufeisep" target="_blank" rel="noopener" aria-label="TikTok">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 3c.3 2.3 1.6 3.8 3.9 4v2.9c-1.4.1-2.7-.3-3.9-1v5.6c0 3.6-2.9 6-6.1 5.5-2.5-.4-4.4-2.6-4.3-5.2.1-3.2 3-5.5 6.2-4.9v3c-1.5-.5-3.2.4-3.3 2-.1 1.3.9 2.4 2.2 2.4 1.3 0 2.3-1 2.3-2.4V3h3z"/></svg></a>
+      <a href="#contacto" data-contact aria-label="Contacto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></a>
     </nav>
     <span class="status" id="status">A carregar o arquivo…</span>
   </div>
 </footer>
+
+<dialog id="contact" aria-labelledby="contactTitle">
+  <form id="contactForm" class="form" novalidate>
+    <h3 id="contactTitle">Fala connosco</h3>
+    <p class="form-intro">A mensagem chega ao email da tuna e respondemos para o teu.</p>
+    <div class="field">
+      <label for="cAssunto">Assunto *</label>
+      <input id="cAssunto" name="assunto" type="text" maxlength="150" required>
+    </div>
+    <div class="field">
+      <label for="cRemetente">Remetente *</label>
+      <input id="cRemetente" name="email" type="email" autocomplete="email" maxlength="200" placeholder="o.teu@email.com" required>
+      <span class="hint">O teu email, para te podermos responder.</span>
+    </div>
+    <div class="field">
+      <label for="cMensagem">Mensagem *</label>
+      <textarea id="cMensagem" name="mensagem" maxlength="5000" required></textarea>
+    </div>
+    <input class="hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="form-err" id="contactErr" role="alert" hidden></p>
+    <div class="actions">
+      <button type="button" class="btn" id="contactCancel">Cancelar</button>
+      <button type="submit" class="btn primary" id="contactSend">Enviar mensagem</button>
+    </div>
+  </form>
+  <div class="form sent" id="contactSent" role="status" hidden>
+    <h3>Mensagem enviada</h3>
+    <p class="form-intro">Obrigada! Recebemos a tua mensagem e vamos responder para o teu email.</p>
+    <div class="actions"><button type="button" class="btn primary" id="contactClose">Fechar</button></div>
+  </div>
+</dialog>
 
 <dialog id="dlg"><form id="form" class="form" method="dialog" novalidate></form></dialog>
 <dialog id="lb" aria-label="Fotografia">
