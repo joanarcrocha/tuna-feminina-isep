@@ -1,0 +1,10 @@
+# Configuração do Worker de bloqueio. Uso: cd cloudflare && npx wrangler deploy
+name = "tufeisep-bloqueio"
+main = "gate-worker.js"
+compatibility_date = "2025-01-01"
+
+# Fica à frente do domínio. A zona tufeisep.com tem de estar na mesma conta da Cloudflare.
+routes = [
+  { pattern = "tufeisep.com/*", zone_name = "tufeisep.com" },
+  { pattern = "www.tufeisep.com/*", zone_name = "tufeisep.com" },
+]
