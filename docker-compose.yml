@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     environment:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no ficheiro .env}
+      SITE_PASSWORD: ${SITE_PASSWORD:-}   # vazia = site aberto; preenchida = página "em construção"
     volumes:
       - arquivo:/data       # base de dados e fotografias
       - backups:/backups    # cópias diárias da base de dados

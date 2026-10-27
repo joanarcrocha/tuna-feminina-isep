@@ -125,6 +125,12 @@ docker compose run --rm -u root --entrypoint sh app -c "rm -f /data/arquivo.db-w
 docker compose start app
 ```
 
+## Site em construção
+
+Enquanto `SITE_PASSWORD` estiver preenchida no `.env`, quem visita `tufeisep.com` vê só a página "Em construção" com um campo de palavra-passe. O bloqueio é feito no servidor: sem a palavra-passe não se recebe o site, a API nem as fotografias. Depois de entrar, o acesso fica guardado 30 dias nesse navegador.
+
+Para abrir o site ao público, deixe `SITE_PASSWORD=` vazia e corra `docker compose up -d`.
+
 ## Segurança
 
 - Só quem sabe a `ADMIN_PASSWORD` pode editar. Partilhe-a apenas com quem gere o arquivo e troque-a quando alguém sai: mude-a no `.env` e corra `docker compose up -d`.

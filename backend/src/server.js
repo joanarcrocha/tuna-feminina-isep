@@ -2,6 +2,7 @@ import express from 'express';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PORT, UPLOADS_DIR, FRONTEND_DIST } from './config.js';
+import { gate } from './gate.js';
 import { api } from './routes.js';
 import { db } from './db.js';
 import { scheduleBackups } from './backup.js';
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(gate());
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '30d', immutable: true }));

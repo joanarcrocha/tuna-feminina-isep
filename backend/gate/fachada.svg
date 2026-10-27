@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9856d"/><stop offset="1" stop-color="#8f3f2c"/></linearGradient>
+    <pattern id="t" width="40" height="20" patternUnits="userSpaceOnUse">
+      <rect width="40" height="20" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="1"/>
+      <path d="M20 0v20" stroke="#000" stroke-opacity=".12"/>
+    </pattern>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#fff" stroke-opacity=".09"/></pattern>
+  </defs>
+  <rect width="800" height="1000" fill="url(#c)"/>
+  <rect width="800" height="1000" fill="url(#t)"/>
+  <rect width="800" height="1000" fill="url(#g)"/>
+  <!-- janelas da fachada, em grelha como o edifício do ISEP -->
+  <g fill="#2b2a29" fill-opacity=".78">
+    <g id="r"><rect x="60" y="120" width="70" height="130"/><rect x="170" y="120" width="70" height="130"/><rect x="280" y="120" width="70" height="130"/><rect x="390" y="120" width="70" height="130"/><rect x="500" y="120" width="70" height="130"/><rect x="610" y="120" width="70" height="130"/></g>
+    <use href="#r" y="200"/><use href="#r" y="400"/><use href="#r" y="600"/>
+  </g>
+  <g fill="#eee4d6" fill-opacity=".16"><use href="#r" y="200"/><use href="#r" y="600"/></g>
+  <!-- linhas de projeto -->
+  <g stroke="#eee4d6" stroke-opacity=".5" fill="none" stroke-width="1.5" stroke-dasharray="6 6">
+    <path d="M30 60H770M30 940H770M30 60V940M770 60V940"/>
+    <circle cx="400" cy="500" r="330"/>
+  </g>
+  <g stroke="#eee4d6" stroke-opacity=".6" stroke-width="2"><path d="M30 60v-20M770 60v-20M30 940v20M770 940v20"/></g>
+</svg>

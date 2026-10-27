@@ -1,0 +1,22 @@
+:root { --tijolo: #bc6751; --cinza: #414141; --bege: #eee4d6; --rosa: #dcb0a1; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 400 16px/1.6 "Manrope", ui-sans-serif, system-ui, sans-serif; color: var(--cinza); background: var(--tijolo); -webkit-font-smoothing: antialiased; }
+.cena { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; position: relative; }
+.imagem { position: fixed; inset: 0; background: url("/bloqueado/fachada.svg") center / cover; }
+.imagem::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(43,42,41,0) 0, rgba(43,42,41,.45) 100%); }
+.cartao { position: relative; width: min(440px, 100%); text-align: center; padding: 40px 32px 32px; background: rgba(252, 250, 247, .94); backdrop-filter: blur(10px); border-radius: 22px; box-shadow: 0 30px 70px -20px rgba(43, 20, 12, .55); }
+.logo { width: 96px; height: 96px; object-fit: contain; margin: 0 auto 8px; display: block; }
+.etiqueta { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--tijolo); }
+h1 { margin: 6px 0 10px; font: 400 clamp(40px, 9vw, 54px)/1.05 "Instrument Serif", Georgia, serif; }
+h1 em { color: var(--tijolo); }
+.texto { margin: 0 0 28px; color: #80776f; }
+form { border-top: 1px solid #ece5dc; padding-top: 22px; }
+label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #80776f; }
+.campo { display: flex; gap: 8px; }
+input { flex: 1; min-width: 0; padding: 12px 14px; font: inherit; color: var(--cinza); background: #fff; border: 1px solid #e0d6ca; border-radius: 12px; }
+input:focus { outline: 2px solid var(--tijolo); outline-offset: 1px; border-color: transparent; }
+button { padding: 12px 20px; font: 700 15px/1 "Manrope", sans-serif; color: #fff; background: var(--tijolo); border: 0; border-radius: 12px; cursor: pointer; }
+button:hover { background: #a85a46; }
+button:disabled { opacity: .6; cursor: wait; }
+.erro { margin: 10px 0 0; font-size: 14px; color: #9a4c39; }
+@media (max-width: 420px) { .campo { flex-direction: column; } .cartao { padding: 32px 22px 24px; } }
