@@ -20,7 +20,6 @@ const SCHEMAS = {
   ]},
   carrossel: { title: 'Fotografia da história', fields: [
     { k: 'foto', l: 'Fotografia', type: 'image', req: true },
-    { k: 'descricao', l: 'Descrição curta', hint: 'Por exemplo: Primeira atuação na esplanada da aeISEP, 1991.' },
   ]},
   membros: { title: 'Membro', fields: [
     { k: 'nome', l: 'Nome', req: true },
@@ -89,22 +88,21 @@ let slideIdx = 0, slideTimer = null, slidePaused = false, carouselKey = '';
 function renderCarrossel() {
   const items = [...state.carrossel].sort((a, b) => a.id - b.id);
   // Só redesenha quando as fotos ou o modo de edição mudam, para não interromper a passagem.
-  const key = JSON.stringify([items.map(s => [s.id, s.foto, s.descricao]), state.edit]);
+  const key = JSON.stringify([items.map(s => [s.id, s.foto]), state.edit]);
   if (key === carouselKey) return;
   carouselKey = key;
   const el = $('#carousel');
   clearInterval(slideTimer);
   if (!items.length) {
     el.classList.add('is-empty');
-    el.innerHTML = `<div class="empty"><strong>Ainda não há fotografias.</strong>Carregue em “Editar arquivo” e depois em “+ Adicionar fotografia”. As fotos passam aqui sozinhas, com uma pequena descrição.</div>`;
+    el.innerHTML = `<div class="empty"><strong>Ainda não há fotografias.</strong>Carregue em “Editar arquivo” e depois em “+ Adicionar fotografia”. As fotos passam aqui sozinhas.</div>`;
     return;
   }
   el.classList.remove('is-empty');
   if (slideIdx >= items.length) slideIdx = 0;
   el.innerHTML = items.map((s, i) => `
       <figure class="slide${i === slideIdx ? ' on' : ''}" aria-hidden="${i !== slideIdx}">
-        <img src="${fileUrl(s.foto)}" alt="${esc(s.descricao || 'Fotografia da história da tuna')}"${i ? ' loading="lazy"' : ''}>
-        ${s.descricao ? `<figcaption>${esc(s.descricao)}</figcaption>` : ''}
+        <img src="${fileUrl(s.foto)}" alt="Fotografia ${i + 1} da história da tuna"${i ? ' loading="lazy"' : ''}>
         ${tools('carrossel', s.id)}
       </figure>`).join('') +
     (items.length > 1 ? `

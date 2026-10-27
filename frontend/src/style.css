@@ -149,13 +149,12 @@ body.editing .item-tools { display: flex; }
 .slide.on { opacity: 1; z-index: 1; }
 .slide img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.06); transition: transform 7s ease-out; }
 .slide.on img { transform: scale(1); }
-.slide figcaption { position: absolute; inset: auto 0 0; padding: 56px 120px 22px 24px; font-size: 15px; font-weight: 500; line-height: 1.45; color: #fff; background: linear-gradient(transparent, rgba(40, 36, 34, .62)); text-wrap: balance; }
 .slide .item-tools { position: absolute; top: 14px; right: 14px; }
 .car-btn { position: absolute; top: 50%; z-index: 2; translate: 0 -50%; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .78); color: var(--cinza); font-size: 22px; line-height: 1; cursor: pointer; backdrop-filter: blur(8px); opacity: 0; transition: opacity .3s; }
 .car-btn.prev { left: 14px; } .car-btn.next { right: 14px; }
 .carousel:hover .car-btn, .car-btn:focus-visible { opacity: 1; }
 @media (hover: none) { .car-btn { opacity: .85; } }
-.dots { position: absolute; right: 22px; bottom: 26px; z-index: 2; display: flex; gap: 6px; }
+.dots { position: absolute; left: 50%; bottom: 18px; translate: -50% 0; z-index: 2; display: flex; gap: 6px; padding: 6px 10px; border-radius: 99px; background: rgba(40, 36, 34, .25); backdrop-filter: blur(6px); }
 .dot { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 99px; background: rgba(255, 255, 255, .55); cursor: pointer; transition: width .4s, background .4s; }
 .dot[aria-current="true"] { width: 20px; background: #fff; }
 
