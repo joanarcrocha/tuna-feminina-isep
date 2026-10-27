@@ -9,6 +9,7 @@
 // de existir. Vídeos e WAV são comprimidos com o FFmpeg (MP4 720p e MP3) para caberem no limite de
 // 50 MB por ficheiro. Pode correr-se mais do que uma vez: o que já existe é saltado.
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';                   // o Node.js 20 não traz WebSocket; a biblioteca do Supabase precisa dele
 import { randomUUID } from 'node:crypto';
 import { writeFileSync, readFileSync, statSync, rmSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -194,7 +195,7 @@ async function importPlan({ plan, used }) {
   }
   try { execFileSync(FFMPEG, ['-version'], { stdio: 'ignore' }); }
   catch { throw new Error('O FFmpeg não está instalado (precisa dele para comprimir vídeos e WAV).'); }
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false }, realtime: { transport: ws } });
   const user = (await ask('Utilizador (admin ou dirmusical): ')).toLowerCase();
   const password = await askHidden('Palavra-passe: ');
   const { error: loginError } = await sb.auth.signInWithPassword({ email: `${user}@tufeisep.local`, password });
