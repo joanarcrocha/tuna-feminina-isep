@@ -68,6 +68,23 @@ const naipeRank = n => {
   const i = NAIPE_ORDEM.findIndex(r => r.test(n));
   return i < 0 ? NAIPE_ORDEM.length : i;
 };
+// Ficheiros guardados como .pdf que na verdade não são PDF (por exemplo uma página de erro do Drive) não abrem no visualizador.
+// Lê-se só o início de cada um para avisar em vez de mostrar "Failed to load PDF document".
+const pdfValido = new Map();
+async function verificarPdf(f) {
+  const src = f.caminho && state.urls[f.caminho];
+  if (!src || pdfValido.has(f.id)) return;
+  pdfValido.set(f.id, true); // em caso de dúvida (sem rede, bloqueio do navegador) mostra o PDF como antes
+  try {
+    const r = await fetch(src);
+    const reader = r.body.getReader();
+    const { value } = await reader.read();
+    reader.cancel();
+    const inicio = new TextDecoder('latin1').decode((value || new Uint8Array()).slice(0, 1024));
+    pdfValido.set(f.id, r.ok && inicio.includes('%PDF-'));
+  } catch { return; }
+  if (pdfValido.get(f.id) === false && state.sel === f.musica_id) renderSongs();
+}
 const fileHref = f => f.caminho ? state.urls[f.caminho] : f.url;
 // PDF no site (ligação temporária) ou pré-visualização do Drive.
 const pdfSrc = f => f.caminho ? state.urls[f.caminho] : (driveId(f.url) ? `https://drive.google.com/file/d/${driveId(f.url)}/preview` : null);
@@ -175,7 +192,14 @@ function renderSong(m) {
   const pdf = pdfs[Math.min(state.pdf, pdfs.length - 1)];
   const yt = ytId(m.link);
 
-  const partitura = pdf
+  if (pdf && pdfValido.get(pdf.id) === undefined) verificarPdf(pdf);
+  const danificado = pdf && pdfValido.get(pdf.id) === false;
+
+  const partitura = danificado
+    ? `<div class="pdf-broken"><strong>Este PDF não abre.</strong>
+         <p>O ficheiro “${esc(pdf.nome)}” está danificado ou não é um PDF verdadeiro (muitas vezes é uma página de erro do Drive que ficou guardada). ${state.manage ? 'Apaga-o e volta a carregar o PDF original.' : 'Avisa a Direção musical para o voltar a carregar.'}</p>
+         ${state.manage ? `<button class="tool danger" data-delfile="${pdf.id}">Apagar</button>` : ''}</div>`
+    : pdf
     ? `${pdfs.length > 1 ? `<div class="bar tight">${pdfs.map((f, i) => `<button class="pill" data-pdf="${i}" aria-pressed="${f === pdf}">${esc(f.nome.replace(/\.pdf$/i, ''))}</button>`).join('')}</div>` : ''}
        <iframe class="pdf-frame" src="${esc(pdfSrc(pdf))}" title="Partitura: ${esc(pdf.nome)}"></iframe>
        ${fileHref(pdf) ? `<a class="song-link" href="${esc(fileHref(pdf))}" target="_blank" rel="noopener">Abrir a partitura em ecrã inteiro <span aria-hidden="true">↗</span></a>` : ''}`

@@ -331,6 +331,8 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .panel { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 18px; display: grid; gap: 12px; }
 .panel h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--blush-ink); }
 .pdf-frame { width: 100%; height: min(78vh, 900px); min-height: 420px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.pdf-broken { padding: 20px; border-radius: 10px; background: var(--blush); color: var(--blush-ink); display: grid; gap: 8px; justify-items: start; }
+.pdf-broken p { margin: 0; font-size: 14px; }
 .yt { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
 .yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .more { margin-top: 20px; }

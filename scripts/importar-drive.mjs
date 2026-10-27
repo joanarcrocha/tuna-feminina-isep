@@ -73,7 +73,10 @@ async function fileSize(id) {
 async function download(id) {
   const res = await fetch(downloadUrl(id));
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const data = Buffer.from(await res.arrayBuffer());
+  // O Drive devolve por vezes uma página HTML (aviso ou limite de descargas) em vez do ficheiro.
+  if (data.subarray(0, 15).toString('latin1').toLowerCase().startsWith('<!doctype') || data.subarray(0, 6).toString('latin1').toLowerCase() === '<html>') throw new Error('o Drive devolveu uma página em vez do ficheiro');
+  return data;
 }
 
 /* ---------- compressão ---------- */
@@ -220,6 +223,7 @@ async function importPlan({ plan, used }) {
       const label = `${f.grupo ? f.grupo + ' › ' : ''}${f.title}`;
       try {
         let file = { data: await download(f.id), nome: f.title, tipo: f.tipo };
+        if (f.tipo === 'application/pdf' && !file.data.subarray(0, 1024).toString('latin1').includes('%PDF-')) throw new Error('não é um PDF válido');
         if (f.modo !== 'copiar') {
           process.stdout.write(`  … a comprimir ${label} (${mb(f.size)})\r`);
           file = compress(f, file.data);
