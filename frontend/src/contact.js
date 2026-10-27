@@ -1,7 +1,9 @@
-// Formulário de contacto: envia a mensagem para o email da tuna através do FormSubmit
-// (serviço gratuito, sem servidor próprio). O primeiro envio pede ativação no email da tuna.
+// Formulário de contacto: envia a mensagem para o email da tuna através do Web3Forms
+// (serviço gratuito, sem servidor próprio). A chave de acesso é pública por natureza:
+// só permite enviar mensagens para o email com que foi criada (tufeisep@gmail.com).
 const TUNA_EMAIL = 'tufeisep@gmail.com';
-const ENDPOINT = `https://formsubmit.co/ajax/${TUNA_EMAIL}`;
+const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_KEY;
+const ENDPOINT = 'https://api.web3forms.com/submit';
 
 export function mountContact() {
   const dlg = document.querySelector('#contact');
@@ -38,7 +40,8 @@ export function mountContact() {
     if (!assunto) return showErr('Escreve o assunto da mensagem.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(remetente)) return showErr('Escreve o teu email, para te podermos responder.');
     if (!mensagem) return showErr('Escreve a mensagem.');
-    if (fd.get('_honey')) return; // campo escondido: só os robôs o preenchem
+    if (fd.get('botcheck')) return; // campo escondido: só os robôs o preenchem
+    if (!ACCESS_KEY) return showErr(`O formulário ainda não está configurado. Por agora, escreve para ${TUNA_EMAIL}.`);
 
     err.hidden = true;
     send.disabled = true;
@@ -48,19 +51,17 @@ export function mountContact() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          _subject: `Site TUFEISEP: ${assunto}`,
-          _template: 'table',
-          _captcha: 'false',
+          access_key: ACCESS_KEY,
+          subject: `Site TUFEISEP: ${assunto}`,
+          from_name: 'Site TUFEISEP',
+          replyto: remetente,     // "Responder" no Gmail vai para quem escreveu
           Assunto: assunto,
-          email: remetente,      // o FormSubmit usa este campo como "responder para"
+          Remetente: remetente,
           Mensagem: mensagem,
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (/activat/i.test(data.message || '')) {
-        return showErr(`O formulário ainda não foi ativado. Foi enviado um email de ativação para ${TUNA_EMAIL}: depois de o confirmarem, as mensagens passam a chegar.`);
-      }
-      if (!res.ok || String(data.success) !== 'true') throw new Error(data.message || 'falhou');
+      if (!res.ok || !data.success) throw new Error(data.message || 'falhou');
       form.reset();
       form.hidden = true;
       sent.hidden = false;

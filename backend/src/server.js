@@ -17,7 +17,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://tile.openstreetmap.org",
-  "connect-src 'self' https://nominatim.openstreetmap.org https://formsubmit.co",
+  "connect-src 'self' https://nominatim.openstreetmap.org https://api.web3forms.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
