@@ -44,7 +44,8 @@ const SCHEMAS = {
 };
 const KINDS = ['carrossel', 'membros', 'festivais'];
 
-const state = { info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
+const state = { festLimite: FEST_PASSO, info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -217,7 +218,8 @@ function renderMembros() {
 
 function renderFestivais() {
   const list = [...state.festivais].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
-  $('#fest').innerHTML = list.length ? list.map(f => {
+  const visiveis = list.slice(0, state.festLimite), restantes = list.length - visiveis.length;
+  $('#fest').innerHTML = list.length ? visiveis.map(f => {
     const d = fmtDate(f.data), pr = allPrizes(f);
     return `<li class="fv reveal" data-place="${esc(placeKey(f))}">
       <div class="dt"><b>${d.big}</b>${esc(d.small)}</div>
@@ -229,7 +231,8 @@ function renderFestivais() {
         ${tools('festivais', f.id)}
       </div>
     </li>`;
-  }).join('')
+  }).join('') + (restantes > 0
+    ? `<li class="fest-more"><button class="btn" data-more="festivais">Mostrar mais <small>${restantes} por ver</small></button></li>` : '')
     : `<li class="empty"><strong>Nenhum festival registado.</strong>Registe cada festival com a data e a cidade.</li>`;
   renderMapa();
 }
@@ -454,7 +457,8 @@ $('#editToggle').addEventListener('click', () => setEditing(!state.edit));
 document.addEventListener('click', e => {
   const t = e.target.closest('button');
   if (!t) return;
-  if (t.dataset.mf) { state.mFiltro = t.dataset.mf; render(); }
+  if (t.dataset.more === 'festivais') { state.festLimite += FEST_PASSO; renderFestivais(); }
+  else if (t.dataset.mf) { state.mFiltro = t.dataset.mf; render(); }
   else if (t.dataset.add) openForm(t.dataset.add);
   else if (t.dataset.edit) openForm(t.dataset.edit, t.dataset.edit === 'info' ? state.info : state[t.dataset.edit].find(x => String(x.id) === t.dataset.id));
   else if (t.dataset.del) armDelete(t);

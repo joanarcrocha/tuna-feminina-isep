@@ -224,6 +224,9 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .fest { list-style: none; margin: 0; padding: 0; }
 .fv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 24px; align-items: start; padding-block: 24px; border-top: 1px solid var(--line); transition: background .3s; }
 .fest .fv:last-child { border-bottom: 1px solid var(--line); }
+.fest-more { padding-top: 24px; border-top: 1px solid var(--line); }
+.fest-more .btn small { opacity: .6; margin-left: 6px; }
+.fest .fv:has(+ .fest-more) { border-bottom: 0; }
 .fv .dt { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .fv .dt b { display: block; font-size: 26px; color: var(--ink); letter-spacing: -.03em; font-weight: 700; }
 .fv h3 { font-size: 21px; font-weight: 700; letter-spacing: -.02em; }
