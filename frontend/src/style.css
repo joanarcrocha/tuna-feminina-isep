@@ -685,3 +685,7 @@ dialog.lb::backdrop { background: transparent; backdrop-filter: none; }
   .reg-foto { opacity: 1; transform: none; transition: none; }
   .pilha img, .pilha .vazia, .reg-abrir img { transition: none; }
 }
+.reg-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.novo-album { display: grid; gap: 14px; padding: 16px; border: 1px dashed var(--accent); border-radius: 14px; background: var(--blush); }
+.novo-album[hidden] { display: none; }
+.novo-nota { font-size: 13px; color: var(--blush-ink); font-weight: 600; }

@@ -4,6 +4,7 @@
 // Só a Administração acrescenta, edita e apaga; as fotografias são reduzidas no browser antes de enviar.
 import { api, fileUrl } from './api.js';
 import { askLogin, getRole, signOut, ROLE_LABEL } from './auth.js';
+import { geocode } from './geocode.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -212,8 +213,62 @@ function opcoesAlbum(atual) {
   const ms = [...state.marcos].sort((a, b) => quando(b).localeCompare(quando(a)));
   return `<option value="sem">Sem álbum</option>
     ${fs.length ? `<optgroup label="Festivais">${fs.map(f => op(`f${f.id}`, `${f.nome}${quando(f) ? ` (${quando(f).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}
-    ${ms.length ? `<optgroup label="Marcos">${ms.map(m => op(`m${m.id}`, `${m.titulo}${quando(m) ? ` (${quando(m).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}`;
+    ${ms.length ? `<optgroup label="Marcos">${ms.map(m => op(`m${m.id}`, `${m.titulo}${quando(m) ? ` (${quando(m).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}
+    <optgroup label="Criar álbum novo">${op('novo-f', '+ Novo festival…')}${op('novo-m', '+ Novo marco…')}</optgroup>`;
 }
+// Campos para criar um festival ou um marco novo a partir dos Registos (aparecem só quando se escolhe "+ Novo…").
+const camposNovo = () => `
+  <div class="novo-album" id="novoF" hidden>
+    <p class="novo-nota">O festival fica também na secção Festivais da página inicial, com a cidade no mapa.</p>
+    <div class="field"><label for="nfNome">Nome do festival *</label><input id="nfNome" name="nf_nome" maxlength="150"></div>
+    <div class="field"><label for="nfLocal">Cidade</label><input id="nfLocal" name="nf_local" maxlength="100"></div>
+    <div class="field"><label for="nfData">Data</label><input id="nfData" name="nf_data" type="date"></div>
+  </div>
+  <div class="novo-album" id="novoM" hidden>
+    <p class="novo-nota">O marco fica também na linha temporal da história, na página inicial.</p>
+    <div class="field"><label for="nmTitulo">Título do marco *</label><input id="nmTitulo" name="nm_titulo" maxlength="150"></div>
+    <div class="field"><label for="nmData">Data</label><input id="nmData" name="nm_data" type="date">
+      <span class="hint">Se só souber o ano, deixe em branco e preencha o campo seguinte.</span></div>
+    <div class="field"><label for="nmAno">Ano (se não souber a data)</label><input id="nmAno" name="nm_ano" type="number" inputmode="numeric" min="1900" max="2100"></div>
+  </div>`;
+
+// Mostra os campos do festival ou do marco novo conforme o que se escolhe no álbum.
+function ligarNovo() {
+  const sel = $('#fAlbum');
+  const mostrar = () => {
+    $('#novoF').hidden = sel.value !== 'novo-f';
+    $('#novoM').hidden = sel.value !== 'novo-m';
+  };
+  sel.addEventListener('change', () => {
+    mostrar();
+    (sel.value === 'novo-f' ? $('#nfNome') : sel.value === 'novo-m' ? $('#nmTitulo') : null)?.focus();
+  });
+  mostrar();
+}
+
+// Se o álbum escolhido é novo, cria o festival ou o marco e devolve a sua chave ("f12", "m3").
+async function resolverAlbum(fd) {
+  const escolha = fd.get('album');
+  const txt = k => String(fd.get(k) || '').trim();
+  if (escolha === 'novo-f') {
+    const nome = txt('nf_nome'), local = txt('nf_local') || null, data = txt('nf_data') || null;
+    if (!nome) throw new Error('Escreva o nome do festival.');
+    const pos = local ? await geocode(local) : null;
+    const novo = await api.create('festivais', { nome, local, data, premios: [], lat: pos?.lat ?? null, lng: pos?.lng ?? null });
+    if (local && !pos) toast('Não encontrei esta cidade no mapa. O festival fica guardado na mesma.');
+    return `f${novo.id}`;
+  }
+  if (escolha === 'novo-m') {
+    const titulo = txt('nm_titulo'), data = txt('nm_data') || null;
+    const ano = data ? Number(data.slice(0, 4)) : Number.parseInt(txt('nm_ano'), 10);
+    if (!titulo) throw new Error('Escreva o título do marco.');
+    if (!Number.isFinite(ano)) throw new Error('Preencha a data do marco ou, pelo menos, o ano.');
+    const novo = await api.create('marcos', { titulo, ano, ...(data ? { data } : {}) });
+    return `m${novo.id}`;
+  }
+  return escolha;
+}
+
 const ligacao = chave => ({ festival_id: chave?.startsWith('f') ? Number(chave.slice(1)) : null, marco_id: chave?.startsWith('m') ? Number(chave.slice(1)) : null });
 
 // Reduz a fotografia no browser (lado maior até 2000 px, WebP) para poupar espaço no Supabase.
@@ -254,7 +309,8 @@ function adicionar() {
     <div class="field"><label for="fFotos">Fotografias *</label><input type="file" id="fFotos" name="fotos" accept="image/*" multiple required>
       <span class="hint">Pode escolher várias de uma vez. São reduzidas antes de enviar, para ocuparem pouco espaço.</span></div>
     <div class="field"><label for="fAlbum">Álbum</label><select id="fAlbum" name="album">${opcoesAlbum(state.album || 'sem')}</select>
-      <span class="hint">O festival ou o marco da linha temporal a que pertencem.</span></div>
+      <span class="hint">O festival ou o marco da linha temporal a que pertencem. Se ainda não existir, escolha “+ Novo festival” ou “+ Novo marco”.</span></div>
+    ${camposNovo()}
     <div class="field"><label for="fLeg">Legenda</label><input id="fLeg" name="legenda" maxlength="200">
       <span class="hint">Opcional. Fica igual em todas as fotografias deste envio; pode mudar-se depois uma a uma.</span></div>`,
   async (fd, progresso) => {
@@ -262,7 +318,9 @@ function adicionar() {
     if (!files.length) throw new Error('Escolha pelo menos uma fotografia.');
     // Sem a tabela, não vale a pena enviar: as fotografias ficariam no armazenamento sem registo.
     if (state.semTabela) throw new Error(SEM_TABELA);
-    const base = { legenda: String(fd.get('legenda') || '').trim() || null, ...ligacao(fd.get('album')) };
+    progresso('A preparar o álbum…');
+    const album = await resolverAlbum(fd);
+    const base = { legenda: String(fd.get('legenda') || '').trim() || null, ...ligacao(album) };
     let feitas = 0, falhas = 0, erro = '';
     for (const f of files) {
       progresso(`A enviar ${feitas + falhas + 1} de ${files.length}…`);
@@ -277,10 +335,12 @@ function adicionar() {
         erro ||= ex?.message || '';
       }
     }
+    if (album !== 'sem') state.album = album;
     await carregar();
     if (falhas && !feitas) throw new Error(`Nenhuma fotografia foi enviada. ${erro}`.trim());
     toast(falhas ? `${feitas} enviadas, ${falhas} falharam: ${erro}` : `${feitas} ${feitas === 1 ? 'fotografia enviada' : 'fotografias enviadas'}.`);
   });
+  ligarNovo();
 }
 
 function editar(id) {
@@ -290,12 +350,31 @@ function editar(id) {
     <h3>Editar fotografia</h3>
     <img class="form-thumb" src="${fileUrl(r.ficheiro)}" alt="">
     <div class="field"><label for="fAlbum">Álbum</label><select id="fAlbum" name="album">${opcoesAlbum(chaveDe(r))}</select></div>
+    ${camposNovo()}
     <div class="field"><label for="fLeg">Legenda</label><input id="fLeg" name="legenda" maxlength="200" value="${esc(r.legenda || '')}"></div>`,
   async fd => {
-    await api.update('registos', r.id, { legenda: String(fd.get('legenda') || '').trim() || null, ...ligacao(fd.get('album')) });
+    const album = await resolverAlbum(fd);
+    await api.update('registos', r.id, { legenda: String(fd.get('legenda') || '').trim() || null, ...ligacao(album) });
     await carregar();
     toast('Guardado');
   });
+  ligarNovo();
+}
+
+// Álbum novo, ainda sem fotografias: cria o festival ou o marco e abre-o para se juntarem fotografias.
+function novoAlbum() {
+  formulario(`
+    <h3>Novo álbum</h3>
+    <div class="field"><label for="fAlbum">Tipo</label><select id="fAlbum" name="album"><option value="novo-f">Festival</option><option value="novo-m">Marco da nossa história</option></select></div>
+    ${camposNovo()}`,
+  async fd => {
+    const album = await resolverAlbum(fd);
+    state.tipo = 'todos';
+    await carregar();
+    escolher(album);
+    toast('Álbum criado. Já pode juntar-lhe fotografias.');
+  });
+  ligarNovo();
 }
 
 async function apagar(btn) {
@@ -341,6 +420,7 @@ $('#loginBtn').addEventListener('click', async () => {
 $('#logoutBtn').addEventListener('click', async () => { await sair(); toast('Saíste da tua conta.'); });
 $('#editToggle').addEventListener('click', () => setEdit(!state.edit));
 $('#addFotos').addEventListener('click', adicionar);
+$('#addAlbum').addEventListener('click', novoAlbum);
 
 document.addEventListener('click', e => {
   const t = e.target.closest('button');

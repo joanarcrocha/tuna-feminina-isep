@@ -6,6 +6,7 @@ import { askLogin, getRole, signOut, hasReservedArea, ROLE_LABEL } from './auth.
 import { mountStrings } from './strings.js';
 import { renderTimeline as drawTimeline } from './timeline.js';
 import { renderMural } from './fetufeisep.js';
+import { geocode } from './geocode.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -390,17 +391,6 @@ $('#fest').addEventListener('mouseover', e => {
   markers.forEach((m, mk) => m.getElement()?.classList.toggle('hot', mk === k));
 });
 $('#fest').addEventListener('mouseleave', () => markers.forEach(m => m.getElement()?.classList.remove('hot')));
-
-// Procura as coordenadas da cidade no OpenStreetMap quando um festival é guardado.
-async function geocode(local) {
-  try {
-    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt,es&q=' + encodeURIComponent(local);
-    const [hit] = await (await fetch(url, { headers: { 'Accept-Language': 'pt-PT' } })).json();
-    return hit ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
-  } catch {
-    return null;
-  }
-}
 
 function render() {
   const focused = document.activeElement?.id === 'mSearch';
