@@ -69,7 +69,7 @@ const SCHEMAS = {
 const KINDS = ['marcos', 'carrossel', 'membros', 'festivais', 'edicoes'];
 
 const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
-const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], edicoes: [], registos: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const state = { festLimite: FEST_PASSO, info: {}, marcos: [], edicoes: [], registos: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -80,7 +80,6 @@ const toRoman = n => [[100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], 
 // Antes da 1.ª geração vêm a 0, a -1, a -2 e as Fundadoras (guardadas como -3); estas ficam em algarismos.
 const FUNDADORAS = -3;
 const fmtGeracao = g => g == null ? '—' : g === FUNDADORAS ? 'Fundadoras' : g > 0 ? toRoman(g) : String(g);
-const tituloGeracao = g => g == null ? 'Sem geração' : g === FUNDADORAS ? 'Fundadoras' : `Geração ${fmtGeracao(g)}`;
 const tools = (kind, id, extra = '') => `<div class="item-tools">${extra}<button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
 const fmtDate = d => {
   if (!d) return { big: '—', small: '' };
@@ -217,15 +216,79 @@ async function moveMember(id, dir) {
   }
 }
 
-let gerObserver = null, ultimoFiltro = null;
-// Só prende ao topo ("empilha") os cartões que cabem no ecrã; um cartão mais alto que o ecrã ficaria com o fim escondido.
-const ajustarPilha = () => requestAnimationFrame(() => document.querySelectorAll('.ger-card').forEach(c => c.classList.toggle('fixa', c.offsetHeight < innerHeight - 170)));
-addEventListener('resize', () => { clearTimeout(ajustarPilha.t); ajustarPilha.t = setTimeout(ajustarPilha, 200); });
+// Altura real do menu de cima (muda no telemóvel), para o que fica preso ao topo encostar logo por baixo.
+const medirNav = () => document.documentElement.style.setProperty('--nav-h', (document.querySelector('.nav')?.offsetHeight || 56) + 'px');
+medirNav();
+addEventListener('resize', medirNav);
+
+/* ---------- velhinhas: lista contínua por gerações, com um índice que acompanha a leitura ---------- */
+// Cada geração é uma linha com o número em grande e os nomes ao lado; os nomes entram em cascata quando a
+// linha aparece no ecrã. O índice das gerações fica preso ao lado (em cima, no telemóvel), marca a geração
+// que se está a ler e leva a qualquer uma com um clique.
+let velObs = null, velSpy = null;
+const gerId = g => `ger-${g == null ? 'sem' : String(g).replace('-', 'm')}`;
+function renderVelhinhas(list) {
+  velObs?.disconnect(); velSpy?.disconnect();
+  const grupos = [];
+  for (const m of list) {
+    const g = m.geracao ?? null;
+    let x = grupos.at(-1);
+    if (!x || x.g !== g) grupos.push(x = { g, ms: [] });
+    x.ms.push(m);
+  }
+  const box = $('#members');
+  box.innerHTML = `
+    <div class="vel">
+      <nav class="vel-idx" aria-label="Gerações">${grupos.map(({ g, ms }) => `
+        <a href="#${gerId(g)}" data-ger="${gerId(g)}">${g === FUNDADORAS ? 'Fund.' : g == null ? '—' : fmtGeracao(g)}<small>${ms.length}</small></a>`).join('')}
+      </nav>
+      <div class="vel-lista">${grupos.map(({ g, ms }) => `
+        <section class="vel-ger" id="${gerId(g)}">
+          <h3 class="vel-num${g === FUNDADORAS || g == null ? ' palavra' : ''}"><span>${g === FUNDADORAS ? 'Fundadoras' : g == null ? 'Sem geração' : fmtGeracao(g)}</span>
+            <small>${g === FUNDADORAS || g == null ? '' : 'Geração · '}${ms.length} ${ms.length === 1 ? 'velhinha' : 'velhinhas'}</small></h3>
+          <ul class="vel-nomes">${ms.map((m, k) => `
+            <li class="vel-nome" style="--k:${k}">
+              <b>${esc(m.nome)}</b>
+              <small>${esc([(m.instrumentos || []).join(', '), m.naipe].filter(Boolean).join(' · ')) || '&nbsp;'}</small>
+              ${tools('membros', m.id)}
+            </li>`).join('')}
+          </ul>
+        </section>`).join('')}
+      </div>
+    </div>`;
+
+  // As linhas aparecem quando entram no ecrã.
+  velObs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('on');
+    velObs.unobserve(e.target);
+  }), { rootMargin: '0px 0px -8% 0px' });
+  box.querySelectorAll('.vel-ger').forEach(sec => velObs.observe(sec));
+
+  // O índice marca a geração que está a meio do ecrã e desliza para a mostrar (no telemóvel).
+  const idx = box.querySelector('.vel-idx');
+  velSpy = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    idx.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.ger === e.target.id));
+    const a = idx.querySelector('a.on');
+    if (!a) return;
+    // Índice ao lado (vertical) ou em cima (horizontal, no telemóvel): desliza até à geração atual.
+    if (idx.scrollWidth > idx.clientWidth) idx.scrollTo({ left: a.offsetLeft - idx.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' });
+    else if (idx.scrollHeight > idx.clientHeight) idx.scrollTo({ top: a.offsetTop - idx.clientHeight / 2 + a.offsetHeight / 2, behavior: 'smooth' });
+  }), { rootMargin: '-45% 0px -50% 0px' });
+  box.querySelectorAll('.vel-ger').forEach(sec => velSpy.observe(sec));
+  idx.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    e.preventDefault();
+    const sec = document.getElementById(a.dataset.ger);
+    sec?.classList.add('on');
+    sec?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  });
+}
+
 function renderMembros() {
-  gerObserver?.disconnect();
-  if (state.mFiltro !== ultimoFiltro) { ultimoFiltro = state.mFiltro; state.gerVistas = 1; }
-  // Velhinhas: cartões pequenos, sem fotografia.
-  $('#members').classList.toggle('compact', state.mFiltro === INATIVA);
+  velObs?.disconnect(); velSpy?.disconnect();
   const counts = { Todas: state.membros.filter(conta).length };
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
   const showCount = e => e !== CALOIRA || state.edit;
@@ -239,67 +302,26 @@ function renderMembros() {
   }
 
   const q = state.q.toLowerCase();
-  const porGeracao = state.mFiltro === INATIVA;
+  const porGeracao = state.mFiltro === INATIVA;   // velhinhas: por geração, da mais recente para a mais antiga
   const list = state.membros
     .filter(m => inFilter(m, state.mFiltro))
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
     .sort(porGeracao ? (a, b) => (b.geracao ?? -Infinity) - (a.geracao ?? -Infinity) || byOrder(a, b) : byOrder);
   visibleMembers = list;
-  // Velhinhas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
   const card = (m, i) => `
-    <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}${porGeracao ? ' compact' : ''}">
-      ${porGeracao ? '' : `<div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>`}
+    <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}">
+      <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>
       <div class="mb-body">
         <h3 class="nt">${esc(m.nome)}</h3>
         <dl class="mb-facts">
           <div><dt>${(m.instrumentos || []).length > 1 ? 'Instrumentos' : 'Instrumento'}</dt><dd>${esc((m.instrumentos || []).join(', ')) || '—'}</dd></div>
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>
-          ${porGeracao ? '' : `<div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>`}
+          <div><dt>Geração</dt><dd>${fmtGeracao(m.geracao)}</dd></div>
         </dl>
-        ${tools('membros', m.id, porGeracao ? '' : moveTools(m, i, list))}
+        ${tools('membros', m.id, moveTools(m, i, list))}
       </div>
     </article>`;
-  // Cada geração é um cartão. Aparece uma de cada vez: a seguinte surge, com animação, quando se desce até ao fim
-  // (ou se carrega em "Próxima geração"), para a secção não ficar enorme. Com pesquisa ativa mostram-se todas.
-  const gruposGer = [];
-  if (porGeracao) list.forEach(m => {
-    const g = m.geracao ?? null;
-    let x = gruposGer.at(-1);
-    if (!x || x.g !== g) gruposGer.push(x = { g, ms: [] });
-    x.ms.push(m);
-  });
-  // Cartões empilhados: cada um fica um pouco rodado e deslocado, e o seguinte desliza por cima do anterior.
-  const cartaoGer = ({ g, ms }, i, novo) => `
-    <section class="ger-card${novo ? ' novo' : ''}" style="--i:${i};--rot:${i % 2 ? .6 : -.6}deg;--dx:${i % 2 ? 6 : -6}px">
-      <h3 class="ger-title">${tituloGeracao(g)}<small>${ms.length} ${ms.length === 1 ? 'velhinha' : 'velhinhas'}</small></h3>
-      <div class="ger-grid">${ms.map(m => card(m, 0)).join('')}</div>
-    </section>`;
-  const mostrarGeracoes = () => {
-    const box = $('#members');
-    const todas = Boolean(q);
-    const n = todas ? gruposGer.length : Math.min(Math.max(state.gerVistas, 1), gruposGer.length);
-    box.innerHTML = gruposGer.slice(0, n).map((g, i) => cartaoGer(g, i)).join('') +
-      (n < gruposGer.length ? `<div class="ger-more" id="gerMore"><button class="btn" data-ger-next>Próxima geração <small>${gruposGer.length - n} por ver</small></button></div>` : '');
-    ajustarPilha();
-    const mais = $('#gerMore');
-    if (!mais) return;
-    const seguinte = () => {
-      if (state.gerVistas >= gruposGer.length) return;
-      gerObserver?.disconnect();
-      state.gerVistas++;
-      mais.insertAdjacentHTML('beforebegin', cartaoGer(gruposGer[state.gerVistas - 1], state.gerVistas - 1, true));
-      ajustarPilha();
-      if (state.gerVistas >= gruposGer.length) mais.remove();
-      else {
-        mais.querySelector('small').textContent = `${gruposGer.length - state.gerVistas} por ver`;
-        gerObserver.observe(mais);
-      }
-    };
-    mais.querySelector('button').addEventListener('click', seguinte);
-    gerObserver = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) seguinte(); }, { rootMargin: '0px 0px -10% 0px' });
-    gerObserver.observe(mais);
-  };
-  if (porGeracao && list.length) { mostrarGeracoes(); return; }
+  if (porGeracao && list.length) { renderVelhinhas(list); return; }
   $('#members').innerHTML = list.length ? list.map(card).join('')
     : `<div class="empty" style="grid-column:1/-1"><strong>${state.membros.length ? 'Ninguém corresponde a este filtro.' : 'Ainda não há membros no arquivo.'}</strong>${state.membros.length ? 'Experimente outra hierarquia ou outra pesquisa.' : 'Adicione cada membro com a fotografia, os instrumentos, o naipe e a data de entrada.'}</div>`;
 }
