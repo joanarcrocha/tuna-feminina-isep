@@ -9,7 +9,8 @@ const RESOURCES = {
   membros:   { text: ['nome', 'estado', 'naipe', 'foto'], int: ['geracao'], json: ['instrumentos'], required: ['nome', 'estado'], files: ['foto'] },
   carrossel: { text: ['foto', 'descricao'], int: [], required: ['foto'], files: ['foto'] },
   fotos:     { text: ['ficheiro', 'legenda'], int: ['ano'], required: ['ficheiro'], files: ['ficheiro'] },
-  registos:  { text: ['ficheiro', 'legenda'], int: ['largura', 'altura', 'festival_id', 'marco_id'], required: ['ficheiro'], files: ['ficheiro'] },
+  eventos:   { text: ['nome', 'local', 'data'], int: ['ano'], required: ['nome'], files: [] },
+  registos:  { text: ['ficheiro', 'legenda'], int: ['largura', 'altura', 'festival_id', 'marco_id', 'evento_id'], required: ['ficheiro'], files: ['ficheiro'] },
   edicoes:   { text: ['data', 'local', 'cartaz', 'descricao'], int: ['numero', 'ano'], json: ['tunas', 'premios'], required: [], files: ['cartaz'] },
   festivais: { text: ['nome', 'local', 'data', 'outros', 'notas'], int: [], num: ['lat', 'lng'], json: ['premios'], required: ['nome'], files: [] },
 };

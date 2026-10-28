@@ -12,14 +12,15 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
 const MAX_LADO = 2000;          // píxeis do lado maior depois de reduzir
 const QUALIDADE = 0.82;
-const TIPOS = { todos: 'Todos', f: 'Festivais', m: 'Marcos' };
+const TIPOS = { todos: 'Todos', f: 'Festivais', m: 'Marcos', e: 'Eventos' };
+const ROTULO = { f: 'Festival', m: 'Marco', e: 'Evento', sem: 'Registos' };
 
-const state = { registos: [], festivais: [], marcos: [], tipo: 'todos', album: null, edit: false, lista: [], aberta: -1, semTabela: false };
+const state = { registos: [], festivais: [], marcos: [], eventos: [], tipo: 'todos', album: null, edit: false, lista: [], aberta: -1, semTabela: false };
 const SEM_TABELA = 'A base de dados ainda não tem a tabela dos registos. Corra o SQL da migração 014 no Supabase e tente outra vez.';
 
 /* ---------- álbuns ---------- */
-// Chave de cada álbum: "f12" (festival 12), "m3" (marco 3) ou "sem" (fotografias sem álbum).
-const chaveDe = r => r.festival_id ? `f${r.festival_id}` : r.marco_id ? `m${r.marco_id}` : 'sem';
+// Chave de cada álbum: "f12" (festival 12), "m3" (marco 3), "e5" (evento 5) ou "sem" (fotografias sem álbum).
+const chaveDe = r => r.festival_id ? `f${r.festival_id}` : r.marco_id ? `m${r.marco_id}` : r.evento_id ? `e${r.evento_id}` : 'sem';
 const quando = x => x.data || (x.ano ? `${x.ano}-00-00` : '');
 const dataCurta = d => {
   if (!d) return '';
@@ -37,6 +38,7 @@ function albuns() {
   const lista = [
     ...state.festivais.map(f => ({ chave: `f${f.id}`, tipo: 'f', titulo: f.nome, sub: [f.local, dataCurta(quando(f))].filter(Boolean).join(' · '), quando: quando(f) })),
     ...state.marcos.map(m => ({ chave: `m${m.id}`, tipo: 'm', titulo: m.titulo, sub: dataCurta(quando(m)), quando: quando(m) })),
+    ...state.eventos.map(e => ({ chave: `e${e.id}`, tipo: 'e', titulo: e.nome, sub: [e.local, dataCurta(quando(e))].filter(Boolean).join(' · '), quando: quando(e) })),
   ];
   if (fotos.has('sem')) lista.push({ chave: 'sem', tipo: 'sem', titulo: 'Outros registos', sub: '', quando: '' });
   return lista
@@ -61,7 +63,7 @@ function render(animar = true) {
         ? `<img src="${fileUrl(f.ficheiro)}" alt="" loading="lazy" style="--i:${i}">`
         : `<span class="vazia" style="--i:${i}"></span>`).reverse().join('')}</span>
       <span class="album-txt">
-        <small>${a.tipo === 'f' ? 'Festival' : a.tipo === 'm' ? 'Marco' : 'Registos'}${a.sub ? ` · ${esc(a.sub)}` : ''}</small>
+        <small>${ROTULO[a.tipo]}${a.sub ? ` · ${esc(a.sub)}` : ''}</small>
         <b>${esc(a.titulo)}</b>
         <em>${a.fotos.length} ${a.fotos.length === 1 ? 'fotografia' : 'fotografias'}</em>
       </span>
@@ -79,7 +81,7 @@ function render(animar = true) {
 
   $('#regSel').innerHTML = sel ? `
     <div>
-      <p class="eyebrow">${sel.tipo === 'f' ? 'Festival' : sel.tipo === 'm' ? 'Marco da nossa história' : 'Registos'}</p>
+      <p class="eyebrow">${sel.tipo === 'm' ? 'Marco da nossa história' : ROTULO[sel.tipo]}</p>
       <h2>${esc(sel.titulo)}</h2>
       ${sel.sub ? `<p class="sub">${esc(sel.sub)}</p>` : ''}
     </div>
@@ -138,7 +140,7 @@ function mostrar(i) {
   $('#lbImg').alt = r.legenda || '';
   $('#lbCap').innerHTML = `
     ${r.legenda ? `<b>${esc(r.legenda)}</b>` : ''}
-    ${a && a.chave !== 'sem' ? `<button type="button" class="lb-album" data-album="${a.chave}">${a.tipo === 'f' ? 'Festival' : 'Marco'} · ${esc(a.titulo)}${a.sub ? ` · ${esc(a.sub)}` : ''}</button>` : ''}
+    ${a && a.chave !== 'sem' ? `<button type="button" class="lb-album" data-album="${a.chave}">${ROTULO[a.tipo]} · ${esc(a.titulo)}${a.sub ? ` · ${esc(a.sub)}` : ''}</button>` : ''}
     <span>${i + 1} / ${state.lista.length}</span>`;
   lb.querySelector('.lb-prev').disabled = i === 0;
   lb.querySelector('.lb-next').disabled = i === state.lista.length - 1;
@@ -211,12 +213,14 @@ function opcoesAlbum(atual) {
   const op = (v, l) => `<option value="${v}"${v === atual ? ' selected' : ''}>${esc(l)}</option>`;
   const fs = [...state.festivais].sort((a, b) => quando(b).localeCompare(quando(a)));
   const ms = [...state.marcos].sort((a, b) => quando(b).localeCompare(quando(a)));
+  const es = [...state.eventos].sort((a, b) => quando(b).localeCompare(quando(a)));
   return `<option value="sem">Sem álbum</option>
     ${fs.length ? `<optgroup label="Festivais">${fs.map(f => op(`f${f.id}`, `${f.nome}${quando(f) ? ` (${quando(f).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}
     ${ms.length ? `<optgroup label="Marcos">${ms.map(m => op(`m${m.id}`, `${m.titulo}${quando(m) ? ` (${quando(m).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}
-    <optgroup label="Criar álbum novo">${op('novo-f', '+ Novo festival…')}${op('novo-m', '+ Novo marco…')}</optgroup>`;
+    ${es.length ? `<optgroup label="Eventos">${es.map(e => op(`e${e.id}`, `${e.nome}${quando(e) ? ` (${quando(e).slice(0, 4)})` : ''}`)).join('')}</optgroup>` : ''}
+    <optgroup label="Criar álbum novo">${op('novo-f', '+ Novo festival…')}${op('novo-m', '+ Novo marco…')}${state.semEventos ? '' : op('novo-e', '+ Novo evento…')}</optgroup>`;
 }
-// Campos para criar um festival ou um marco novo a partir dos Registos (aparecem só quando se escolhe "+ Novo…").
+// Campos para criar um festival, um marco ou um evento novo a partir dos Registos (aparecem só quando se escolhe "+ Novo…").
 const camposNovo = () => `
   <div class="novo-album" id="novoF" hidden>
     <p class="novo-nota">O festival fica também na secção Festivais da página inicial, com a cidade no mapa.</p>
@@ -230,23 +234,32 @@ const camposNovo = () => `
     <div class="field"><label for="nmData">Data</label><input id="nmData" name="nm_data" type="date">
       <span class="hint">Se só souber o ano, deixe em branco e preencha o campo seguinte.</span></div>
     <div class="field"><label for="nmAno">Ano (se não souber a data)</label><input id="nmAno" name="nm_ano" type="number" inputmode="numeric" min="1900" max="2100"></div>
+  </div>
+  <div class="novo-album" id="novoE" hidden>
+    <p class="novo-nota">Jantares, aniversários, serenatas, atuações… O evento fica só aqui, nos Registos.</p>
+    <div class="field"><label for="neNome">Nome do evento *</label><input id="neNome" name="ne_nome" maxlength="150"></div>
+    <div class="field"><label for="neLocal">Local</label><input id="neLocal" name="ne_local" maxlength="100"></div>
+    <div class="field"><label for="neData">Data</label><input id="neData" name="ne_data" type="date">
+      <span class="hint">Se só souber o ano, deixe em branco e preencha o campo seguinte.</span></div>
+    <div class="field"><label for="neAno">Ano (se não souber a data)</label><input id="neAno" name="ne_ano" type="number" inputmode="numeric" min="1900" max="2100"></div>
   </div>`;
 
-// Mostra os campos do festival ou do marco novo conforme o que se escolhe no álbum.
+// Mostra os campos do festival, marco ou evento novo conforme o que se escolhe no álbum.
 function ligarNovo() {
   const sel = $('#fAlbum');
   const mostrar = () => {
     $('#novoF').hidden = sel.value !== 'novo-f';
     $('#novoM').hidden = sel.value !== 'novo-m';
+    $('#novoE').hidden = sel.value !== 'novo-e';
   };
   sel.addEventListener('change', () => {
     mostrar();
-    (sel.value === 'novo-f' ? $('#nfNome') : sel.value === 'novo-m' ? $('#nmTitulo') : null)?.focus();
+    ({ 'novo-f': $('#nfNome'), 'novo-m': $('#nmTitulo'), 'novo-e': $('#neNome') })[sel.value]?.focus();
   });
   mostrar();
 }
 
-// Se o álbum escolhido é novo, cria o festival ou o marco e devolve a sua chave ("f12", "m3").
+// Se o álbum escolhido é novo, cria o festival, o marco ou o evento e devolve a sua chave ("f12", "m3", "e5").
 async function resolverAlbum(fd) {
   const escolha = fd.get('album');
   const txt = k => String(fd.get(k) || '').trim();
@@ -266,10 +279,19 @@ async function resolverAlbum(fd) {
     const novo = await api.create('marcos', { titulo, ano, ...(data ? { data } : {}) });
     return `m${novo.id}`;
   }
+  if (escolha === 'novo-e') {
+    const nome = txt('ne_nome'), local = txt('ne_local') || null, data = txt('ne_data') || null;
+    const ano = data ? Number(data.slice(0, 4)) : Number.parseInt(txt('ne_ano'), 10);
+    if (!nome) throw new Error('Escreva o nome do evento.');
+    const novo = await api.create('eventos', { nome, local, data, ano: Number.isFinite(ano) ? ano : null });
+    return `e${novo.id}`;
+  }
   return escolha;
 }
 
-const ligacao = chave => ({ festival_id: chave?.startsWith('f') ? Number(chave.slice(1)) : null, marco_id: chave?.startsWith('m') ? Number(chave.slice(1)) : null });
+const idDe = (chave, letra) => chave?.startsWith(letra) ? Number(chave.slice(1)) : null;
+// Enquanto a tabela dos eventos não existir no Supabase, não se envia o campo evento_id.
+const ligacao = chave => ({ festival_id: idDe(chave, 'f'), marco_id: idDe(chave, 'm'), ...(state.semEventos ? {} : { evento_id: idDe(chave, 'e') }) });
 
 // Reduz a fotografia no browser (lado maior até 2000 px, WebP) para poupar espaço no Supabase.
 async function reduzir(file) {
@@ -365,7 +387,7 @@ function editar(id) {
 function novoAlbum() {
   formulario(`
     <h3>Novo álbum</h3>
-    <div class="field"><label for="fAlbum">Tipo</label><select id="fAlbum" name="album"><option value="novo-f">Festival</option><option value="novo-m">Marco da nossa história</option></select></div>
+    <div class="field"><label for="fAlbum">Tipo</label><select id="fAlbum" name="album"><option value="novo-f">Festival</option><option value="novo-m">Marco da nossa história</option>${state.semEventos ? '' : '<option value="novo-e">Evento</option>'}</select></div>
     ${camposNovo()}`,
   async fd => {
     const album = await resolverAlbum(fd);
@@ -436,12 +458,13 @@ document.addEventListener('click', e => {
 /* ---------- dados ---------- */
 async function carregar() {
   // Enquanto a tabela dos registos não existir no Supabase, a página mostra-se vazia.
-  const [registos, festivais, marcos] = await Promise.all([
+  const [registos, festivais, marcos, eventos] = await Promise.all([
     api.list('registos').then(x => { state.semTabela = false; return x; }, () => { state.semTabela = true; return []; }),
     api.list('festivais').catch(() => []),
     api.list('marcos').catch(() => []),
+    api.list('eventos').then(x => { state.semEventos = false; return x; }, () => { state.semEventos = true; return []; }),
   ]);
-  Object.assign(state, { registos, festivais, marcos });
+  Object.assign(state, { registos, festivais, marcos, eventos });
   render(false);
 }
 

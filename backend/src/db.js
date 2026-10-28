@@ -65,6 +65,15 @@ db.exec(`
     criado   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS eventos (
+    id      INTEGER PRIMARY KEY,
+    nome    TEXT NOT NULL,
+    local   TEXT,
+    data    TEXT,
+    ano     INTEGER,
+    criado  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS registos (
     id           INTEGER PRIMARY KEY,
     ficheiro     TEXT NOT NULL,
@@ -73,6 +82,7 @@ db.exec(`
     legenda      TEXT,
     festival_id  INTEGER,
     marco_id     INTEGER,
+    evento_id    INTEGER,
     criado       TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -111,6 +121,8 @@ if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INT
 if (!membrosCols.has('geracao')) db.exec('ALTER TABLE membros ADD COLUMN geracao INTEGER');
 const marcosCols = new Set(db.prepare('PRAGMA table_info(marcos)').all().map(c => c.name));
 if (!marcosCols.has('data')) db.exec('ALTER TABLE marcos ADD COLUMN data TEXT');
+const registosCols = new Set(db.prepare('PRAGMA table_info(registos)').all().map(c => c.name));
+if (!registosCols.has('evento_id')) db.exec('ALTER TABLE registos ADD COLUMN evento_id INTEGER');
 if (!marcosCols.has('fotos')) db.exec("ALTER TABLE marcos ADD COLUMN fotos TEXT NOT NULL DEFAULT '[]'");
 
 // A Magíster passou de opção à parte para hierarquia.

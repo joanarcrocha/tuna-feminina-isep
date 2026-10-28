@@ -96,7 +96,17 @@ create table if not exists edicoes (
   criado     timestamptz not null default now()
 );
 
--- Registos: fotografias de um festival ou de um marco.
+-- Eventos: jantares, aniversários, serenatas… (só aparecem nos Registos).
+create table if not exists eventos (
+  id      bigint generated always as identity primary key,
+  nome    text not null,
+  local   text,
+  data    date,
+  ano     int,
+  criado  timestamptz not null default now()
+);
+
+-- Registos: fotografias de um festival, de um marco ou de um evento.
 create table if not exists registos (
   id          bigint generated always as identity primary key,
   ficheiro    text not null,                                        -- imagem no armazenamento "fotos"
@@ -105,6 +115,7 @@ create table if not exists registos (
   legenda     text,
   festival_id bigint references festivais (id) on delete set null,
   marco_id    bigint references marcos (id) on delete set null,
+  evento_id   bigint references eventos (id) on delete set null,
   criado      timestamptz not null default now()
 );
 
@@ -122,7 +133,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais', 'edicoes', 'registos'] loop
+  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais', 'edicoes', 'eventos', 'registos'] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "leitura publica" on %I', t);
     execute format('drop policy if exists "escrita editores" on %I', t);
