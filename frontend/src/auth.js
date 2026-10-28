@@ -13,9 +13,10 @@ import { api } from './api.js';
 const INTERNAL_DOMAIN = 'tufeisep.local';
 const toEmail = user => `${user.trim().toLowerCase()}@${INTERNAL_DOMAIN}`;
 
-export const ROLE_LABEL = { admin: 'Administração', dirmusical: 'Direção musical', tunante: 'Tunantes', caloira: 'Caloiras' };
+export const ROLE_LABEL = { admin: 'Administração', dirmusical: 'Direção musical', comunicacao: 'Departamento de Comunicação', tunante: 'Tunantes', caloira: 'Caloiras' };
 export const hasReservedArea = Boolean(sb);
 export const canManageMusic = role => role === 'admin' || role === 'dirmusical';
+export const canManageRegistos = role => role === 'admin' || role === 'comunicacao';
 
 let cachedRole;
 

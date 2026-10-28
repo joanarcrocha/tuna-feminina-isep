@@ -1,9 +1,9 @@
 // Registos: galeria de fotografias, cada uma de um festival ou de um marco da linha temporal.
 // Os álbuns aparecem como pilhas de fotografias; ao escolher um, o mosaico reorganiza-se com animação.
 // Carregar numa fotografia abre-a em grande, a crescer a partir da miniatura.
-// Só a Administração acrescenta, edita e apaga; as fotografias são reduzidas no browser antes de enviar.
+// Só a Administração e o Departamento de Comunicação acrescentam, editam e apagam; as fotografias são reduzidas no browser antes de enviar.
 import { api, fileUrl } from './api.js';
-import { askLogin, getRole, signOut, ROLE_LABEL } from './auth.js';
+import { askLogin, getRole, signOut, canManageRegistos, ROLE_LABEL } from './auth.js';
 import { geocode } from './geocode.js';
 
 const $ = s => document.querySelector(s);
@@ -202,7 +202,7 @@ function escolher(chave) {
   if (state.album) $('#regSel').scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth', block: 'start' });
 }
 
-/* ---------- edição (só Administração) ---------- */
+/* ---------- edição (Administração e Departamento de Comunicação) ---------- */
 function toast(msg) {
   const t = $('#toast');
   t.textContent = msg; t.classList.add('on');
@@ -427,8 +427,8 @@ async function atualizarSessao() {
   const role = await getRole();
   $('#loginBtn').hidden = Boolean(role);
   $('#logoutBtn').hidden = !role;
-  $('#editToggle').hidden = role !== 'admin';
-  if (role !== 'admin' && state.edit) setEdit(false);
+  $('#editToggle').hidden = !canManageRegistos(role);
+  if (!canManageRegistos(role) && state.edit) setEdit(false);
   return role;
 }
 async function sair() { await signOut(); await atualizarSessao(); }
@@ -437,7 +437,7 @@ $('#loginBtn').addEventListener('click', async () => {
   const role = await askLogin();
   if (!role) return;
   await atualizarSessao();
-  toast(role === 'admin' ? 'Entraste. Carrega em “Editar registos” para gerir as fotografias.' : `Entraste como ${ROLE_LABEL[role]}.`);
+  toast(canManageRegistos(role) ? 'Entraste. Carrega em “Editar registos” para gerir as fotografias.' : `Entraste como ${ROLE_LABEL[role]}.`);
 });
 $('#logoutBtn').addEventListener('click', async () => { await sair(); toast('Saíste da tua conta.'); });
 $('#editToggle').addEventListener('click', () => setEdit(!state.edit));
