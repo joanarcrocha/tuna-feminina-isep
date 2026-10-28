@@ -25,7 +25,8 @@ const SCHEMAS = {
     { k: 'historia', l: 'A história', type: 'textarea', hint: 'Separe os parágrafos com uma linha em branco.' },
   ]},
   marcos: { title: 'Marco', fields: [
-    { k: 'ano', l: 'Ano', type: 'number', req: true },
+    { k: 'data', l: 'Data', type: 'date', hint: 'Dia, mês e ano. Se só souber o ano, deixe em branco e preencha o campo seguinte.' },
+    { k: 'ano', l: 'Ano (se não souber a data)', type: 'number' },
     { k: 'titulo', l: 'Título', req: true, hint: 'Por exemplo: Fundação, Primeiro festival, 1.º prémio.' },
     { k: 'texto', l: 'Descrição', type: 'textarea' },
     { k: 'fotos', l: 'Fotografias', type: 'images', hint: 'Pode escolher várias de uma vez. No site aumentam quando se passa o rato por cima.' },
@@ -460,6 +461,7 @@ $('#form').addEventListener('submit', async e => {
   const showErr = msg => { err.textContent = msg; err.hidden = false; };
   const missing = sc.fields.find(x => x.req && x.type !== 'image' && !String(fd.get(x.k) || '').trim());
   if (missing) return showErr(`Preencha o campo “${missing.l}”.`);
+  if (kind === 'marcos' && !fd.get('data') && !String(fd.get('ano') || '').trim()) return showErr('Preencha a data ou, pelo menos, o ano.');
   const imgMissing = sc.fields.find(x => x.req && x.type === 'image' && !item?.[x.k] && !fd.get(x.k)?.size);
   if (imgMissing) return showErr('Escolha uma imagem.');
 
@@ -480,6 +482,8 @@ $('#form').addEventListener('submit', async e => {
       else if (x.type === 'number') { const n = parseInt(fd.get(x.k), 10); data[x.k] = Number.isFinite(n) ? n : null; }
       else data[x.k] = String(fd.get(x.k) || '').trim() || null;
     }
+    // Com data, o ano sai dela (serve para ordenar e para os marcos que só têm ano).
+    if (kind === 'marcos' && data.data) data.ano = Number(data.data.slice(0, 4));
     if (kind === 'festivais') {
       // Mantém as coordenadas se a cidade não mudou; senão procura-as de novo.
       const same = item && placeKey(item) === placeKey(data) && Number.isFinite(item.lat);

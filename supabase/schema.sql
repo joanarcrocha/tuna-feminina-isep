@@ -21,6 +21,7 @@ create table if not exists marcos (
   criado  timestamptz not null default now()
 );
 alter table marcos add column if not exists fotos jsonb not null default '[]';  -- várias fotografias por marco
+alter table marcos add column if not exists data date;                         -- dia exato, quando se sabe (o ano fica em ano)
 
 create table if not exists membros (
   id            bigint generated always as identity primary key,

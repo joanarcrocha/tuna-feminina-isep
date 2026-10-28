@@ -3,7 +3,8 @@
 // e o cartão entra pelo seu lado. As fotografias são miniaturas que só aumentam com o rato por cima
 // (ou com um toque, no telemóvel).
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const SVG = 'http://www.w3.org/2000/svg';
+// 1991-11-11 → "11 de novembro"
+const diaMes = d => new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
 let el = null, svg = null, track = null, line = null, head = null;
@@ -11,7 +12,9 @@ let total = 0, samples = [], dots = [], frame = 0, key = '';
 
 export function renderTimeline(box, items, { edit, tools, fileUrl }) {
   el = box;
-  const list = [...items].sort((a, b) => (a.ano ?? 0) - (b.ano ?? 0) || a.id - b.id);
+  // Por data; um marco só com ano fica no início desse ano.
+  const quando = m => m.data || `${String(m.ano ?? 0).padStart(4, '0')}-00-00`;
+  const list = [...items].sort((a, b) => quando(a).localeCompare(quando(b)) || a.id - b.id);
   // Só redesenha quando os marcos ou o modo de edição mudam, para não repetir as animações.
   const k = JSON.stringify([list, edit]);
   if (k === key) return;
@@ -35,7 +38,7 @@ export function renderTimeline(box, items, { edit, tools, fileUrl }) {
       <li class="tl-item ${i % 2 ? 'dir' : 'esq'}" style="--n:${i}">
         <span class="tl-dot"></span>
         <article class="tl-card">
-          <p class="tl-ano">${esc(m.ano)}</p>
+          <p class="tl-ano">${esc(m.data ? m.data.slice(0, 4) : m.ano)}${m.data ? `<small>${esc(diaMes(m.data))}</small>` : ''}</p>
           <h4>${esc(m.titulo)}</h4>
           ${paras.map(p => `<p class="tl-txt">${esc(p)}</p>`).join('')}
           ${fotos.length ? `<div class="tl-fotos">${fotos.map((f, k) => `

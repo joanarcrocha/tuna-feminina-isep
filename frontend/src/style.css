@@ -443,7 +443,8 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .tl-item.dir .tl-card { grid-column: 2; margin-left: calc(var(--wave) + 34px); transform: translateX(32px) rotate(1.2deg); }
 .tl-item.visto .tl-card { opacity: 1; transform: none; }
 .tl-card:hover { translate: 0 -4px; }
-.tl-ano { font-family: var(--serif); font-style: italic; font-size: 44px; line-height: 1; color: var(--accent); }
+.tl-ano { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font-family: var(--serif); font-style: italic; font-size: 44px; line-height: 1; color: var(--accent); }
+.tl-ano small { font-family: var(--body); font-style: normal; font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
 .tl-card h4 { margin-top: 6px; font-size: 19px; font-weight: 700; letter-spacing: -.015em; }
 .tl-txt { margin-top: 8px; color: var(--muted); }
 .tl-card .item-tools { margin-top: 14px; }
