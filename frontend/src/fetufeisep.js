@@ -13,22 +13,37 @@ const dataLonga = e => e.data
 // "Melhor Tuna: Tuna X" → ["Melhor Tuna", "Tuna X"]
 const premio = p => { const i = String(p).indexOf(':'); return i < 0 ? [p, ''] : [p.slice(0, i).trim(), p.slice(i + 1).trim()]; };
 
-let lista = [], opts = {};
+// Começa com as 4 edições mais recentes; ao chegar ao fundo do mural, colam-se mais 4 de cada vez.
+const PASSO = 4;
+let lista = [], opts = {}, mostradas = PASSO, key = '', aColar = false;
 
 export function renderMural(el, items, o) {
   opts = o;
   lista = [...items].sort((a, b) => (b.numero ?? 0) - (a.numero ?? 0) || String(ano(b)).localeCompare(String(ano(a))) || b.id - a.id);
+  // Só redesenha quando as edições ou o modo de edição mudam, para não perder os cartazes já colados.
+  const k = JSON.stringify([lista, o.edit]);
+  if (k === key) return;
+  key = k;
   el.closest('section').hidden = !lista.length && !o.edit;
   if (!lista.length) {
     el.innerHTML = `<li class="empty"><strong>Ainda não há edições.</strong>Carregue em “+ Adicionar edição” e junte o cartaz, as tunas a concurso e os prémios.</li>`;
+    atualizarMais();
     return;
   }
-  el.innerHTML = lista.map((e, i) => {
-    const frente = e.cartaz
-      ? `<img src="${o.fileUrl(e.cartaz)}" alt="" loading="lazy">`
-      : `<span class="poster-vazio"><b>${esc(e.numero ?? '')}</b><span>FE'TUFEISEP</span><small>${esc(ano(e))}</small></span>`;
-    return `
-    <li class="poster-slot reveal" style="--rot:${ROT[i % ROT.length]}deg;--fita:${ROT_FITA[i % ROT_FITA.length]}deg">
+  // No modo de edição vêem-se todas, para se poderem gerir.
+  const n = o.edit ? lista.length : Math.min(Math.max(mostradas, PASSO), lista.length);
+  el.innerHTML = lista.slice(0, n).map((e, i) => cartaz(e, i)).join('');
+  atualizarMais();
+}
+
+// i: posição no mural (dá a inclinação); j: ordem dentro de um grupo colado agora (-1 se não for colado).
+function cartaz(e, i, j = -1) {
+  const o = opts;
+  const frente = e.cartaz
+    ? `<img src="${o.fileUrl(e.cartaz)}" alt="" loading="lazy">`
+    : `<span class="poster-vazio"><b>${esc(e.numero ?? '')}</b><span>FE'TUFEISEP</span><small>${esc(ano(e))}</small></span>`;
+  return `
+    <li class="poster-slot${j < 0 ? ' reveal' : ' novo'}" style="--rot:${ROT[i % ROT.length]}deg;--fita:${ROT_FITA[i % ROT_FITA.length]}deg;--j:${Math.max(j, 0)}">
       <button type="button" class="poster" data-ed="${e.id}" aria-label="${esc(edicao(e))} do FE'TUFEISEP${ano(e) ? `, ${esc(ano(e))}` : ''}. Ver detalhes">
         <span class="poster-in">
           <span class="poster-face frente">${frente}</span>
@@ -44,7 +59,40 @@ export function renderMural(el, items, o) {
       </button>
       ${o.tools('edicoes', e.id)}
     </li>`;
-  }).join('');
+}
+
+// Cola as 4 edições seguintes no mural, uma a uma.
+function colarMais() {
+  const el = $('#mural');
+  const de = el.querySelectorAll('.poster-slot').length;
+  if (aColar || de >= lista.length) return;
+  aColar = true;
+  const ate = Math.min(de + PASSO, lista.length);
+  el.insertAdjacentHTML('beforeend', lista.slice(de, ate).map((e, k) => cartaz(e, de + k, k)).join(''));
+  mostradas = ate;
+  atualizarMais();
+  // Espera que acabem de colar antes de deixar vir as seguintes.
+  setTimeout(() => { aColar = false; vigiar(); }, 900);
+}
+
+function atualizarMais() {
+  const box = $('#muralMais');
+  const vistas = $('#mural').querySelectorAll('.poster-slot').length;
+  const faltam = lista.length - vistas;
+  box.hidden = faltam <= 0 || opts.edit;
+  box.querySelector('small').textContent = `${faltam} por ver`;
+  vigiar();
+}
+
+// Quando o fundo do mural aparece no ecrã, colam-se mais edições.
+const observador = 'IntersectionObserver' in window
+  ? new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) colarMais(); }, { rootMargin: '0px 0px -12% 0px' })
+  : null;
+function vigiar() {
+  const box = $('#muralMais');
+  if (!observador || !box) return;
+  observador.disconnect();
+  if (!box.hidden) observador.observe(box);
 }
 
 function abrir(id, origem) {
@@ -82,6 +130,7 @@ function abrir(id, origem) {
 }
 
 document.addEventListener('click', ev => {
+  if (ev.target.closest('#muralMaisBtn')) return colarMais();
   const p = ev.target.closest('.poster');
   if (p) return abrir(p.dataset.ed, p);
   const dlg = $('#edDlg');

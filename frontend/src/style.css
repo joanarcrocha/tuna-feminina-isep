@@ -532,6 +532,18 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .poster:hover .poster-face { box-shadow: 0 4px 8px rgba(65, 50, 40, .1), 0 30px 50px -18px rgba(65, 50, 40, .45); }
 .poster:focus-visible { outline: none; }
 .poster:focus-visible .poster-face { outline: 2px solid var(--accent); outline-offset: 4px; }
+/* cartazes colados ao descer: caem de cima, assentam na parede e a fita-cola é posta por último */
+.poster-slot.novo .poster { animation: colar .75s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--j) * .14s); }
+.poster-slot.novo .poster::before { animation: fita .35s ease-out both; animation-delay: calc(var(--j) * .14s + .55s); }
+@keyframes colar {
+  from { opacity: 0; transform: translateY(-70px) scale(1.18) rotate(calc(var(--rot) * -3)); filter: drop-shadow(0 40px 30px rgba(65, 50, 40, .25)); }
+  55% { opacity: 1; transform: translateY(4px) scale(.98); filter: none; }
+}
+@keyframes fita { from { opacity: 0; scale: 1.5; } }
+.mural-mais { display: flex; justify-content: center; margin-top: 28px; }
+.mural-mais[hidden] { display: none; }
+.mural-mais .btn small { opacity: .6; margin-left: 6px; }
+
 /* sem rato (telemóvel), o cartaz não vira: um toque abre logo a ficha */
 @media (hover: none) { .poster:hover { rotate: var(--rot); translate: 0; } .poster:hover .poster-in { transform: none; } }
 
@@ -564,5 +576,6 @@ dialog.ed-dlg:not(:has(.ed-cartaz)) { width: min(620px, calc(100vw - 32px)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .poster, .poster-in { transition: none; }
+  .poster-slot.novo .poster, .poster-slot.novo .poster::before { animation: none; }
   dialog.ed-dlg[open] { animation: none; }
 }
