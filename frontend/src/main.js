@@ -92,7 +92,7 @@ const fmtDate = d => {
 function renderStats() {
   const L = state.loaded;
   $('#sFund').textContent = state.info.fundacao || 1991;   // ano que está no emblema
-  $('#sMemb').textContent = L ? state.membros.filter(daTuna).length : '—';
+  $('#sMemb').textContent = L ? state.membros.filter(conta).length : '—';
   $('#sFest').textContent = L ? state.festivais.length : '—';
   $('#sAnos').textContent = new Date().getFullYear() - (state.info.fundacao || 1991);
 }
@@ -173,6 +173,8 @@ $('#carousel').addEventListener('focusout', () => { slidePaused = false; });
 const CALOIRA = 'Caloira';
 const MSG_CALOIRAS = 'As caloiras da TUFEISEP estão a tentar conquistar o seu lugar na Tuna, tenta mais tarde';
 const daTuna = m => m.estado !== CALOIRA && m.estado !== INATIVA;   // tunantes em atividade: as caloiras e as inativas têm o seu separador
+// Contagem de "Todas" e dos membros no arquivo: tunantes (com a Magíster) e velhinhas; as caloiras ainda não contam.
+const conta = m => m.estado !== CALOIRA;
 const inFilter = (m, filtro) =>
   filtro === 'Todas' ? daTuna(m) : filtro === 'Tunante' ? m.estado === 'Tunante' || isMagister(m) : m.estado === filtro;
 
@@ -224,7 +226,7 @@ function renderMembros() {
   if (state.mFiltro !== ultimoFiltro) { ultimoFiltro = state.mFiltro; state.gerVistas = 1; }
   // Velhinhas: cartões pequenos, sem fotografia.
   $('#members').classList.toggle('compact', state.mFiltro === INATIVA);
-  const counts = { Todas: state.membros.filter(daTuna).length };
+  const counts = { Todas: state.membros.filter(conta).length };
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
   const showCount = e => e !== CALOIRA || state.edit;
   $('#mFilter').innerHTML = ['Todas', ...ESTADOS].map(e =>
