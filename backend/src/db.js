@@ -64,6 +64,19 @@ db.exec(`
     notas    TEXT,
     criado   TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS edicoes (
+    id         INTEGER PRIMARY KEY,
+    numero     INTEGER,
+    data       TEXT,
+    ano        INTEGER,
+    local      TEXT,
+    cartaz     TEXT,
+    descricao  TEXT,
+    tunas      TEXT NOT NULL DEFAULT '[]',
+    premios    TEXT NOT NULL DEFAULT '[]',
+    criado     TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 // Migração das bases criadas com a primeira versão (um só instrumento, ano de entrada, estado "Tuna").

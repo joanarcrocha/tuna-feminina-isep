@@ -499,3 +499,70 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .keep { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 .keep label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
 .keep img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; display: block; }
+
+/* FE'TUFEISEP: mural de cartazes presos com fita-cola; cada um vira com o rato por cima */
+#fetufeisep[hidden] { display: none; }
+.mural { list-style: none; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: clamp(36px, 5vw, 56px) clamp(22px, 3.5vw, 40px);
+  padding: clamp(36px, 5vw, 56px) clamp(20px, 4vw, 48px); border-radius: var(--r); background: var(--blush);
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1.2px); background-size: 18px 18px; }
+.mural > .empty { grid-column: 1 / -1; background: var(--surface); }
+.poster-slot { display: grid; gap: 12px; justify-items: center; }
+.poster { position: relative; width: 100%; aspect-ratio: 1 / 1.414; padding: 0; border: 0; background: none; cursor: pointer; perspective: 1400px; rotate: var(--rot);
+  transition: rotate .5s cubic-bezier(.2, .8, .2, 1), translate .5s cubic-bezier(.2, .8, .2, 1); }
+/* a fita-cola fica no sítio enquanto o cartaz vira */
+.poster::before { content: ""; position: absolute; top: -12px; left: 50%; width: 84px; height: 26px; translate: -50% 0; rotate: var(--fita); z-index: 3;
+  background: color-mix(in srgb, var(--rosa) 70%, transparent); box-shadow: 0 1px 2px rgba(65, 50, 40, .12); clip-path: polygon(2% 0, 98% 4%, 100% 100%, 0 96%); }
+.poster-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
+.poster-face { position: absolute; inset: 0; overflow: hidden; border-radius: 4px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 2px 4px rgba(65, 50, 40, .08), 0 18px 34px -16px rgba(65, 50, 40, .35); transition: box-shadow .5s; }
+.frente { background: var(--surface); }
+.frente img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.poster-vazio { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 6px; padding: 16px; text-align: center; background: var(--tijolo); color: var(--bege); }
+.poster-vazio b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(72px, 9vw, 110px); line-height: .9; }
+.poster-vazio span { font-weight: 800; letter-spacing: .08em; font-size: 15px; }
+.poster-vazio small { font-size: 13px; opacity: .8; }
+.verso { transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 22px; text-align: left; background: var(--cinza); color: var(--bege); }
+.verso .eyebrow { color: var(--rosa); }
+.verso-n { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
+.verso-ano { font-family: var(--serif); font-style: italic; font-size: 52px; line-height: 1; color: var(--rosa); }
+.verso-loc, .verso-num { font-size: 14px; color: color-mix(in srgb, var(--bege) 80%, transparent); }
+.verso-cta { margin-top: auto; font-size: 13px; font-weight: 700; color: #fff; }
+.poster:hover, .poster:focus-visible { rotate: 0deg; translate: 0 -8px; }
+.poster:hover .poster-in, .poster:focus-visible .poster-in { transform: rotateY(180deg); }
+.poster:hover .poster-face { box-shadow: 0 4px 8px rgba(65, 50, 40, .1), 0 30px 50px -18px rgba(65, 50, 40, .45); }
+.poster:focus-visible { outline: none; }
+.poster:focus-visible .poster-face { outline: 2px solid var(--accent); outline-offset: 4px; }
+/* sem rato (telemóvel), o cartaz não vira: um toque abre logo a ficha */
+@media (hover: none) { .poster:hover { rotate: var(--rot); translate: 0; } .poster:hover .poster-in { transform: none; } }
+
+/* ficha da edição: abre a partir do cartaz */
+dialog.ed-dlg { width: min(940px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow: auto; }
+dialog.ed-dlg[open] { animation: ed-abrir .55s cubic-bezier(.2, .8, .2, 1); }
+@keyframes ed-abrir { from { opacity: 0; transform: translate(var(--ox, 0), var(--oy, 0)) scale(.3) rotate(-4deg); } }
+.ed-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.ed-body:not(:has(.ed-cartaz)) { grid-template-columns: 1fr; }
+dialog.ed-dlg:not(:has(.ed-cartaz)) { width: min(620px, calc(100vw - 32px)); }
+.ed-cartaz { margin: 0; background: var(--blush); }
+.ed-cartaz img { width: 100%; height: 100%; max-height: calc(100dvh - 48px); object-fit: cover; display: block; }
+.ed-info { padding: clamp(24px, 4vw, 40px); display: grid; gap: 12px; align-content: start; }
+.ed-info h3 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(48px, 7vw, 72px); line-height: .95; color: var(--accent); }
+.ed-info h4 { margin: 12px 0 -2px; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.ed-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 0; }
+.ed-facts dt { font-size: 12px; color: var(--muted); }
+.ed-facts dd { margin: 0; font-weight: 600; }
+.ed-txt { color: var(--muted); }
+.ed-tunas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ed-tunas li { padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; font-size: 14px; font-weight: 600; }
+.ed-premios { list-style: none; margin: 0; padding: 0; display: grid; }
+.ed-premios li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.ed-premios li span { color: var(--muted); }
+.ed-premios li b { text-align: right; }
+.ed-fechar { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--glass); backdrop-filter: blur(8px); color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer; }
+@media (max-width: 720px) {
+  .ed-body { grid-template-columns: 1fr; }
+  .ed-cartaz img { max-height: 46dvh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster, .poster-in { transition: none; }
+  dialog.ed-dlg[open] { animation: none; }
+}

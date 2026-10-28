@@ -5,6 +5,7 @@ import { mountContact } from './contact.js';
 import { askLogin, getRole, signOut, hasReservedArea, ROLE_LABEL } from './auth.js';
 import { mountStrings } from './strings.js';
 import { renderTimeline as drawTimeline } from './timeline.js';
+import { renderMural } from './fetufeisep.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -42,6 +43,16 @@ const SCHEMAS = {
     { k: 'geracao', l: 'Geração', type: 'number', min: -3, max: 99, hint: 'Escreva o número (por exemplo 28). No site aparece em numeração romana (XXVIII). As gerações antes da primeira são 0, -1 e -2; as Fundadoras são -3.' },
     { k: 'foto', l: 'Fotografia', type: 'image' },
   ]},
+  edicoes: { title: 'Edição do festival', fields: [
+    { k: 'numero', l: 'Edição n.º', type: 'number', min: 1, max: 200, req: true },
+    { k: 'data', l: 'Data', type: 'date', hint: 'Se só souber o ano, deixe em branco e preencha o campo seguinte.' },
+    { k: 'ano', l: 'Ano (se não souber a data)', type: 'number' },
+    { k: 'local', l: 'Local', hint: 'Por exemplo: Auditório Magno do ISEP.' },
+    { k: 'cartaz', l: 'Cartaz', type: 'image' },
+    { k: 'tunas', l: 'Tunas a concurso', type: 'lines', hint: 'Uma tuna por linha.' },
+    { k: 'premios', l: 'Prémios', type: 'lines', hint: 'Um por linha, no formato Prémio: Tuna. Por exemplo: Melhor Tuna: Tuna Feminina de Coimbra' },
+    { k: 'descricao', l: 'Sobre esta edição', type: 'textarea' },
+  ]},
   festivais: { title: 'Festival', fields: [
     { k: 'nome', l: 'Nome do festival', req: true },
     { k: 'local', l: 'Cidade' },
@@ -51,10 +62,10 @@ const SCHEMAS = {
     { k: 'notas', l: 'Notas', type: 'textarea' },
   ]},
 };
-const KINDS = ['marcos', 'carrossel', 'membros', 'festivais'];
+const KINDS = ['marcos', 'carrossel', 'membros', 'festivais', 'edicoes'];
 
 const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
-const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], edicoes: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -96,6 +107,9 @@ function renderHistoria() {
   renderCarrossel();
   renderTimeline();
 }
+
+/* ---------- FE'TUFEISEP ---------- */
+const renderEdicoes = () => renderMural($('#mural'), state.edicoes, { edit: state.edit, tools, fileUrl });
 
 /* ---------- linha temporal ---------- */
 const renderTimeline = () => drawTimeline($('#timeline'), state.marcos, { edit: state.edit, tools, fileUrl });
@@ -372,13 +386,15 @@ async function geocode(local) {
 function render() {
   const focused = document.activeElement?.id === 'mSearch';
   const pos = focused ? document.activeElement.selectionStart : 0;
-  renderStats(); renderHistoria(); renderMembros(); renderFestivais();
+  renderStats(); renderHistoria(); renderMembros(); renderFestivais(); renderEdicoes();
   if (focused) { const s = $('#mSearch'); s.focus(); s.setSelectionRange(pos, pos); }
 }
 
 /* ---------- dados ---------- */
 async function load(kind) {
   if (kind === 'info') state.info = await api.info();
+  // Enquanto a tabela do FE'TUFEISEP não existir no Supabase, a secção fica simplesmente vazia.
+  else if (kind === 'edicoes') state.edicoes = await api.list(kind).catch(() => []);
   else state[kind] = await api.list(kind);
 }
 
@@ -436,7 +452,8 @@ function openForm(kind, item) {
     const id = 'f_' + x.k, val = v[x.k] ?? (x.type === 'images' ? [] : '');
     const req = x.req ? ' required' : '';
     let input;
-    if (x.type === 'textarea') input = `<textarea id="${id}" name="${x.k}"${req}>${esc(val)}</textarea>`;
+    if (x.type === 'lines') input = `<textarea id="${id}" name="${x.k}"${req}>${esc((v[x.k] || []).join('\n'))}</textarea>`;
+    else if (x.type === 'textarea') input = `<textarea id="${id}" name="${x.k}"${req}>${esc(val)}</textarea>`;
     else if (x.type === 'select') input = `<select id="${id}" name="${x.k}"><option value="">—</option>${x.opts.map(o => `<option${o === val ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
@@ -478,12 +495,13 @@ $('#form').addEventListener('submit', async e => {
         const novas = [];
         for (const file of fd.getAll(x.k).filter(fl => fl?.size)) novas.push((await api.upload(file)).ficheiro);
         data[x.k] = [...(item?.[x.k] || []).filter(fx => !remover.includes(fx)), ...novas];
-      } else if (x.type === 'checks') data[x.k] = fd.getAll(x.k);
+      } else if (x.type === 'lines') data[x.k] = String(fd.get(x.k) || '').split('\n').map(l => l.trim()).filter(Boolean);
+      else if (x.type === 'checks') data[x.k] = fd.getAll(x.k);
       else if (x.type === 'number') { const n = parseInt(fd.get(x.k), 10); data[x.k] = Number.isFinite(n) ? n : null; }
       else data[x.k] = String(fd.get(x.k) || '').trim() || null;
     }
     // Com data, o ano sai dela (serve para ordenar e para os marcos que só têm ano).
-    if (kind === 'marcos' && data.data) data.ano = Number(data.data.slice(0, 4));
+    if ((kind === 'marcos' || kind === 'edicoes') && data.data) data.ano = Number(data.data.slice(0, 4));
     if (kind === 'festivais') {
       // Mantém as coordenadas se a cidade não mudou; senão procura-as de novo.
       const same = item && placeKey(item) === placeKey(data) && Number.isFinite(item.lat);

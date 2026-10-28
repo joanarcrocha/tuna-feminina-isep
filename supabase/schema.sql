@@ -82,6 +82,20 @@ create table if not exists festivais (
 alter table festivais add column if not exists lat double precision;
 alter table festivais add column if not exists lng double precision;
 
+-- FE'TUFEISEP: o festival da tuna, uma linha por edição.
+create table if not exists edicoes (
+  id         bigint generated always as identity primary key,
+  numero     int,                                  -- 1.ª, 2.ª… edição
+  data       date,                                 -- dia do festival (ou só o ano, em baixo)
+  ano        int,
+  local      text,
+  cartaz     text,                                 -- imagem no armazenamento "fotos"
+  descricao  text,
+  tunas      jsonb not null default '[]',          -- ["Tuna X", "Tuna Y"]
+  premios    jsonb not null default '[]',          -- ["Melhor Tuna: Tuna X", …]
+  criado     timestamptz not null default now()
+);
+
 -- ---------- Quem pode editar ----------
 -- Só as contas cujo email esteja nesta tabela podem alterar o arquivo.
 create table if not exists editores (email text primary key);
@@ -96,7 +110,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais'] loop
+  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais', 'edicoes'] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "leitura publica" on %I', t);
     execute format('drop policy if exists "escrita editores" on %I', t);

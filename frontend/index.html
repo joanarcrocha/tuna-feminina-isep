@@ -43,6 +43,7 @@
       <a href="#historia">História</a>
       <a href="#membros">Membros</a>
       <a href="#festivais">Festivais</a>
+      <a href="#fetufeisep">FE'TUFEISEP</a>
     </div>
     <div class="session">
       <a class="edit-toggle" id="reservedLink" href="reservado.html" hidden>Área reservada</a>
@@ -135,6 +136,20 @@
       </div>
     </div>
   </section>
+
+  <section class="ch" id="fetufeisep">
+    <div class="wrap">
+      <div class="ch-head reveal">
+        <div>
+          <p class="eyebrow">Capítulo quatro</p>
+          <h2>FE'<em class="s">TUFEISEP</em></h2>
+          <p class="sub">O nosso festival. Cada cartaz é uma edição: passe o rato por cima para o virar e carregue para saber tudo.</p>
+        </div>
+        <button class="add" data-add="edicoes">+ Adicionar edição</button>
+      </div>
+      <ul class="mural" id="mural"></ul>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -187,6 +202,8 @@
     <div class="actions"><button type="button" class="btn primary" id="contactClose">Fechar</button></div>
   </div>
 </dialog>
+
+<dialog id="edDlg" class="ed-dlg" aria-labelledby="edTitle"></dialog>
 
 <dialog id="dlg"><form id="form" class="form" method="dialog" novalidate></form></dialog>
 <div class="toast" id="toast" role="status"></div>
