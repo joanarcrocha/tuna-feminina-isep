@@ -31,7 +31,7 @@ const SCHEMAS = {
     { k: 'estado', l: 'Hierarquia', type: 'select', opts: HIERARQUIAS, req: true, hint: 'Só pode haver uma Magíster. Ao escolher uma nova, a anterior passa a Tunante.' },
     { k: 'instrumentos', l: 'Instrumentos', type: 'checks', opts: INSTRUMENTOS },
     { k: 'naipe', l: 'Naipe de voz', type: 'select', opts: NAIPES },
-    { k: 'geracao', l: 'Geração', type: 'number', min: 1, max: 99, hint: 'Escreva o número (por exemplo 28). No site aparece em numeração romana (XXVIII).' },
+    { k: 'geracao', l: 'Geração', type: 'number', min: -3, max: 99, hint: 'Escreva o número (por exemplo 28). No site aparece em numeração romana (XXVIII). As gerações antes da primeira são 0, -1 e -2; as Fundadoras são -3.' },
     { k: 'foto', l: 'Fotografia', type: 'image' },
   ]},
   festivais: { title: 'Festival', fields: [
@@ -54,7 +54,10 @@ const initials = m => (m.nome || '?').split(/\s+/).filter(Boolean).slice(0, 2).m
 // Gerações escrevem-se em numeração romana (28 -> XXVIII); o rótulo "Geração" já vem do campo ao lado.
 const toRoman = n => [[100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]
   .reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
-const fmtGeracao = g => g ? toRoman(g) : '—';
+// Antes da 1.ª geração vêm a 0, a -1, a -2 e as Fundadoras (guardadas como -3); estas ficam em algarismos.
+const FUNDADORAS = -3;
+const fmtGeracao = g => g == null ? '—' : g === FUNDADORAS ? 'Fundadoras' : g > 0 ? toRoman(g) : String(g);
+const tituloGeracao = g => g == null ? 'Sem geração' : g === FUNDADORAS ? 'Fundadoras' : `Geração ${fmtGeracao(g)}`;
 const tools = (kind, id, extra = '') => `<div class="item-tools">${extra}<button class="tool" data-edit="${kind}" data-id="${id}">Editar</button><button class="tool danger" data-del="${kind}" data-id="${id}">Apagar</button></div>`;
 const fmtDate = d => {
   if (!d) return { big: '—', small: '' };
@@ -208,7 +211,7 @@ function renderMembros() {
   const list = state.membros
     .filter(m => inFilter(m, state.mFiltro))
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
-    .sort(porGeracao ? (a, b) => (b.geracao ?? -1) - (a.geracao ?? -1) || byOrder(a, b) : byOrder);
+    .sort(porGeracao ? (a, b) => (b.geracao ?? -Infinity) - (a.geracao ?? -Infinity) || byOrder(a, b) : byOrder);
   visibleMembers = list;
   // Tunantes Inativas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
   const card = (m, i) => `
@@ -228,7 +231,7 @@ function renderMembros() {
   // (ou se carrega em "Próxima geração"), para a secção não ficar enorme. Com pesquisa ativa mostram-se todas.
   const gruposGer = [];
   if (porGeracao) list.forEach(m => {
-    const g = m.geracao || 0;
+    const g = m.geracao ?? null;
     let x = gruposGer.at(-1);
     if (!x || x.g !== g) gruposGer.push(x = { g, ms: [] });
     x.ms.push(m);
@@ -236,7 +239,7 @@ function renderMembros() {
   // Cartões empilhados: cada um fica um pouco rodado e deslocado, e o seguinte desliza por cima do anterior.
   const cartaoGer = ({ g, ms }, i, novo) => `
     <section class="ger-card${novo ? ' novo' : ''}" style="--i:${i};--rot:${i % 2 ? .6 : -.6}deg;--dx:${i % 2 ? 6 : -6}px">
-      <h3 class="ger-title">${g ? `Geração ${fmtGeracao(g)}` : 'Sem geração'}<small>${ms.length} ${ms.length === 1 ? 'tunante' : 'tunantes'}</small></h3>
+      <h3 class="ger-title">${tituloGeracao(g)}<small>${ms.length} ${ms.length === 1 ? 'tunante' : 'tunantes'}</small></h3>
       <div class="ger-grid">${ms.map(m => card(m, 0)).join('')}</div>
     </section>`;
   const mostrarGeracoes = () => {
@@ -426,7 +429,7 @@ function openForm(kind, item) {
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
     else if (x.type === 'image') input = `<input type="file" id="${id}" name="${x.k}" accept="image/jpeg,image/png,image/webp,image/gif">` + (val ? `<span class="hint">Já tem imagem. Escolha outra para substituir.</span>` : '');
-    else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ' inputmode="numeric" min="${x.min ?? 1900}" max="${x.max ?? 2100}"' : ''}${req}>`;
+    else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ` inputmode="numeric" min="${x.min ?? 1900}" max="${x.max ?? 2100}"` : ''}${req}>`;
     return `<div class="field"><label for="${id}">${x.l}${x.req ? ' *' : ''}</label>${input}${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
   };
   $('#form').innerHTML = `<h3>${item ? 'Editar' : 'Novo'} · ${sc.title.toLowerCase()}</h3>${sc.fields.map(field).join('')}
