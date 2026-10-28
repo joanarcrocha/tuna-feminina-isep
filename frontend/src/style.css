@@ -577,3 +577,25 @@ dialog.ed-dlg:not(:has(.ed-cartaz)) { width: min(620px, calc(100vw - 32px)); }
   .poster, .poster-in { transition: none; }
   dialog.ed-dlg[open] { animation: none; }
 }
+
+/* ensaios: horário e mapa da Sala da Tuna, antes da história */
+.ensaios { padding-block: clamp(56px, 8vw, 96px) 0; }
+.ensaios-card { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 4vw, 48px); align-items: center; padding: clamp(20px, 3vw, 28px); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); }
+.ensaios-txt { display: grid; gap: 12px; padding: clamp(4px, 1.5vw, 16px); }
+.ensaios-txt h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -.035em; line-height: 1.08; }
+.ensaios-txt p:not(.eyebrow) { color: var(--muted); }
+.ensaios-txt strong { color: var(--ink); }
+.ensaios-link { justify-self: start; display: inline-flex; gap: 6px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 99px; color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; transition: border-color .25s, color .25s; }
+.ensaios-link:hover { border-color: var(--accent); color: var(--accent); }
+.ensaios-mapa { aspect-ratio: 16 / 10; border-radius: calc(var(--r) - 6px); overflow: hidden; background: var(--blush); z-index: 0; }
+.ensaios-mapa .leaflet-tile-pane { filter: grayscale(1) contrast(.88) brightness(1.06); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ensaios-mapa .leaflet-tile-pane { filter: grayscale(1) invert(.92) contrast(.85); } }
+:root[data-theme="dark"] .ensaios-mapa .leaflet-tile-pane { filter: grayscale(1) invert(.92) contrast(.85); }
+/* o ponto da sala pulsa devagar */
+.pin-sala span::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--tijolo); animation: sala-pulso 2.2s ease-out infinite; }
+.pin-sala span { position: relative; }
+@keyframes sala-pulso { from { transform: scale(1); opacity: .8; } to { transform: scale(2.6); opacity: 0; } }
+.leaflet-tooltip.sala-label { padding: 6px 12px; border: 0; border-radius: 99px; background: var(--cinza); color: #fff; font: 600 13px/1.2 var(--body); box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .4); }
+.leaflet-tooltip.sala-label::before { border-top-color: var(--cinza); }
+@media (max-width: 720px) { .ensaios-card { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .pin-sala span::after { animation: none; } }

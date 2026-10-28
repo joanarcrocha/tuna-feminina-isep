@@ -368,6 +368,22 @@ function renderMapa() {
   setTimeout(() => map.invalidateSize(), 0);
 }
 
+// Mapa dos ensaios: a Sala da Tuna, no ISEP (coordenadas do Google Maps).
+const SALA = [41.1785293, -8.6086809];
+function mapaSala() {
+  const el = $('#salaMapa');
+  if (!el) return;
+  const m = L.map(el, { scrollWheelZoom: false, zoomControl: false, attributionControl: true, dragging: !matchMedia('(hover: none)').matches }).setView(SALA, 17);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(m);
+  L.marker(SALA, { icon: L.divIcon({ className: 'pin pin-sala', html: '<span></span>', iconSize: [22, 22] }), title: 'Sala da Tuna Feminina do ISEP' })
+    .bindTooltip('Sala da Tuna Feminina do ISEP', { permanent: true, direction: 'top', offset: [0, -14], className: 'sala-label' })
+    .addTo(m);
+}
+mapaSala();
+
 // Passar o rato por um festival realça a cidade no mapa.
 $('#fest').addEventListener('mouseover', e => {
   const k = e.target.closest('.fv')?.dataset.place;
