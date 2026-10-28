@@ -69,7 +69,7 @@ const SCHEMAS = {
 const KINDS = ['marcos', 'carrossel', 'membros', 'festivais', 'edicoes'];
 
 const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
-const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], edicoes: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], edicoes: [], registos: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -305,13 +305,16 @@ function renderMembros() {
 function renderFestivais() {
   const list = [...state.festivais].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
   const visiveis = list.slice(0, state.festLimite), restantes = list.length - visiveis.length;
+  // Festivais com fotografias nos Registos: carregar no festival abre o álbum dele.
+  const fotos = id => state.registos.filter(r => r.festival_id === id).length;
   $('#fest').innerHTML = list.length ? visiveis.map(f => {
-    const d = fmtDate(f.data), pr = allPrizes(f);
-    return `<li class="fv reveal" data-place="${esc(placeKey(f))}">
+    const d = fmtDate(f.data), pr = allPrizes(f), n = fotos(f.id);
+    return `<li class="fv reveal${n ? ' com-fotos' : ''}" data-place="${esc(placeKey(f))}">
       <div class="dt"><b>${d.big}</b>${esc(d.small)}</div>
       <div>
-        <h3>${esc(f.nome)}</h3>
+        <h3>${n ? `<a class="fv-link" href="registos.html?album=f${f.id}">${esc(f.nome)}</a>` : esc(f.nome)}</h3>
         ${f.local ? `<div class="loc">${esc(f.local)}</div>` : ''}
+        ${n ? `<span class="fv-fotos">Ver ${n} ${n === 1 ? 'fotografia' : 'fotografias'} <span aria-hidden="true">→</span></span>` : ''}
         ${pr.length ? `<p class="prizes">${esc(pr.join(' · '))}</p>` : ''}
         ${f.notas ? `<p class="notes">${esc(f.notas)}</p>` : ''}
         ${tools('festivais', f.id)}
@@ -404,13 +407,15 @@ async function load(kind) {
   if (kind === 'info') state.info = await api.info();
   // Enquanto a tabela do FE'TUFEISEP não existir no Supabase, a secção fica simplesmente vazia.
   else if (kind === 'edicoes') state.edicoes = await api.list(kind).catch(() => []);
+  // Só para saber que festivais já têm fotografias nos Registos.
+  else if (kind === 'registos') state.registos = await api.list(kind).catch(() => []);
   else state[kind] = await api.list(kind);
 }
 
 async function loadAll() {
   const status = $('#status');
   // Cada secção carrega por si: se uma falhar, as outras continuam a aparecer.
-  const results = await Promise.allSettled(['info', ...KINDS].map(load));
+  const results = await Promise.allSettled(['info', ...KINDS, 'registos'].map(load));
   const failed = results.filter(r => r.status === 'rejected').length;
   state.loaded = failed < results.length;
   status.textContent = !failed ? 'Arquivo atualizado'
