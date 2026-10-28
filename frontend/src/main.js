@@ -4,6 +4,7 @@ import { api, fileUrl } from './api.js';
 import { mountContact } from './contact.js';
 import { askLogin, getRole, signOut, hasReservedArea, ROLE_LABEL } from './auth.js';
 import { mountStrings } from './strings.js';
+import { renderTimeline as drawTimeline } from './timeline.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,6 +23,12 @@ const SCHEMAS = {
     { k: 'fundacao', l: 'Ano de fundação', type: 'number' },
     { k: 'lema', l: 'Lema ou frase da tuna' },
     { k: 'historia', l: 'A história', type: 'textarea', hint: 'Separe os parágrafos com uma linha em branco.' },
+  ]},
+  marcos: { title: 'Marco', fields: [
+    { k: 'ano', l: 'Ano', type: 'number', req: true },
+    { k: 'titulo', l: 'Título', req: true, hint: 'Por exemplo: Fundação, Primeiro festival, 1.º prémio.' },
+    { k: 'texto', l: 'Descrição', type: 'textarea' },
+    { k: 'fotos', l: 'Fotografias', type: 'images', hint: 'Pode escolher várias de uma vez. No site aumentam quando se passa o rato por cima.' },
   ]},
   carrossel: { title: 'Fotografia da história', fields: [
     { k: 'foto', l: 'Fotografia', type: 'image', req: true },
@@ -43,10 +50,10 @@ const SCHEMAS = {
     { k: 'notas', l: 'Notas', type: 'textarea' },
   ]},
 };
-const KINDS = ['carrossel', 'membros', 'festivais'];
+const KINDS = ['marcos', 'carrossel', 'membros', 'festivais'];
 
 const FEST_PASSO = 10; // festivais visíveis de cada vez; "Mostrar mais" revela mais 10
-const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
+const state = { gerVistas: 1, festLimite: FEST_PASSO, info: {}, marcos: [], membros: [], carrossel: [], festivais: [], loaded: false, edit: false, mFiltro: 'Todas', q: '' };
 
 /* ---------- render ---------- */
 const allPrizes = f => [...(f.premios || []), ...String(f.outros || '').split(',').map(s => s.trim()).filter(Boolean)];
@@ -86,7 +93,11 @@ function renderHistoria() {
     `<div class="item-tools"><button class="tool" data-edit="info" data-id="info">Editar texto</button></div>`;
 
   renderCarrossel();
+  renderTimeline();
 }
+
+/* ---------- linha temporal ---------- */
+const renderTimeline = () => drawTimeline($('#timeline'), state.marcos, { edit: state.edit, tools, fileUrl });
 
 /* ---------- carrossel da história ---------- */
 const SLIDE_MS = 5000;
@@ -421,13 +432,15 @@ function openForm(kind, item) {
   const sc = SCHEMAS[kind], v = item || {};
   current = { kind, item };
   const field = x => {
-    const id = 'f_' + x.k, val = v[x.k] ?? '';
+    const id = 'f_' + x.k, val = v[x.k] ?? (x.type === 'images' ? [] : '');
     const req = x.req ? ' required' : '';
     let input;
     if (x.type === 'textarea') input = `<textarea id="${id}" name="${x.k}"${req}>${esc(val)}</textarea>`;
     else if (x.type === 'select') input = `<select id="${id}" name="${x.k}"><option value="">—</option>${x.opts.map(o => `<option${o === val ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
+    else if (x.type === 'images') input = `<input type="file" id="${id}" name="${x.k}" multiple accept="image/jpeg,image/png,image/webp,image/gif">` +
+      (val.length ? `<div class="keep">${val.map(fx => `<label><img src="${fileUrl(fx)}" alt=""><span><input type="checkbox" name="${x.k}_remover" value="${esc(fx)}"> Remover</span></label>`).join('')}</div>` : '');
     else if (x.type === 'image') input = `<input type="file" id="${id}" name="${x.k}" accept="image/jpeg,image/png,image/webp,image/gif">` + (val ? `<span class="hint">Já tem imagem. Escolha outra para substituir.</span>` : '');
     else input = `<input id="${id}" name="${x.k}" type="${x.type || 'text'}" value="${esc(val)}"${x.type === 'number' ? ` inputmode="numeric" min="${x.min ?? 1900}" max="${x.max ?? 2100}"` : ''}${req}>`;
     return `<div class="field"><label for="${id}">${x.l}${x.req ? ' *' : ''}</label>${input}${x.hint ? `<span class="hint">${x.hint}</span>` : ''}</div>`;
@@ -457,6 +470,12 @@ $('#form').addEventListener('submit', async e => {
       if (x.type === 'image') {
         const file = fd.get(x.k);
         data[x.k] = file?.size ? (await api.upload(file)).ficheiro : item?.[x.k] ?? null;
+      } else if (x.type === 'images') {
+        // As que ficam (sem "Remover") e depois as novas, pela ordem em que foram escolhidas.
+        const remover = fd.getAll(x.k + '_remover');
+        const novas = [];
+        for (const file of fd.getAll(x.k).filter(fl => fl?.size)) novas.push((await api.upload(file)).ficheiro);
+        data[x.k] = [...(item?.[x.k] || []).filter(fx => !remover.includes(fx)), ...novas];
       } else if (x.type === 'checks') data[x.k] = fd.getAll(x.k);
       else if (x.type === 'number') { const n = parseInt(fd.get(x.k), 10); data[x.k] = Number.isFinite(n) ? n : null; }
       else data[x.k] = String(fd.get(x.k) || '').trim() || null;

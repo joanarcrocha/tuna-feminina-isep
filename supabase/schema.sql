@@ -17,8 +17,10 @@ create table if not exists marcos (
   titulo  text not null,
   texto   text,
   foto    text,
+  fotos   jsonb not null default '[]',
   criado  timestamptz not null default now()
 );
+alter table marcos add column if not exists fotos jsonb not null default '[]';  -- várias fotografias por marco
 
 create table if not exists membros (
   id            bigint generated always as identity primary key,

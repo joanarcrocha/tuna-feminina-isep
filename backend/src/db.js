@@ -23,6 +23,7 @@ db.exec(`
     titulo  TEXT NOT NULL,
     texto   TEXT,
     foto    TEXT,
+    fotos   TEXT NOT NULL DEFAULT '[]',
     criado  TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -84,6 +85,8 @@ if (!festivaisCols.has('lng')) db.exec('ALTER TABLE festivais ADD COLUMN lng REA
 
 if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INTEGER');
 if (!membrosCols.has('geracao')) db.exec('ALTER TABLE membros ADD COLUMN geracao INTEGER');
+const marcosCols = new Set(db.prepare('PRAGMA table_info(marcos)').all().map(c => c.name));
+if (!marcosCols.has('fotos')) db.exec("ALTER TABLE marcos ADD COLUMN fotos TEXT NOT NULL DEFAULT '[]'");
 
 // A Magíster passou de opção à parte para hierarquia.
 if (membrosCols.has('magister')) {
