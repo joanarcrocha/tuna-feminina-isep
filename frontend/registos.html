@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Registos · TUFEISEP</title>
+  <meta name="description" content="Fotografias da Tuna Feminina do ISEP (TUFEISEP), organizadas por festivais e momentos da nossa história.">
+  <meta name="theme-color" content="#bc6751">
+  <link rel="canonical" href="https://tufeisep.com/registos.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_PT">
+  <meta property="og:site_name" content="TUFEISEP">
+  <meta property="og:title" content="Registos · TUFEISEP">
+  <meta property="og:description" content="Fotografias da Tuna Feminina do ISEP, por festivais e momentos da nossa história.">
+  <meta property="og:url" content="https://tufeisep.com/registos.html">
+  <meta property="og:image" content="https://tufeisep.com/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body class="pg-registos">
+
+<nav class="nav" aria-label="Secções">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="/logo.webp" alt="" width="36" height="36"><span>TUFE<em>ISEP</em></span></a>
+    <div class="links">
+      <a href="./#historia">História</a>
+      <a href="./#membros">Membros</a>
+      <a href="./#festivais">Festivais</a>
+      <a href="./#fetufeisep">FE'TUFEISEP</a>
+      <a href="registos.html" aria-current="page">Registos</a>
+    </div>
+    <div class="session">
+      <button class="edit-toggle" id="editToggle" aria-pressed="false" hidden>Editar registos</button>
+      <button class="edit-toggle" id="loginBtn">Entrar</button>
+      <button class="edit-toggle subtle" id="logoutBtn" hidden>Sair</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap reg-main">
+  <header class="reg-head">
+    <div>
+      <p class="eyebrow">Arquivo de fotografias</p>
+      <h1>Os nossos <em class="s">registos</em></h1>
+      <p class="sub">Escolhe um festival ou um momento da nossa história. Carrega numa fotografia para a veres em grande.</p>
+    </div>
+    <button class="add" id="addFotos">+ Adicionar fotografias</button>
+  </header>
+
+  <div class="reg-tabs" id="regTabs" role="tablist" aria-label="Tipo de álbum"></div>
+  <div class="albuns" id="albuns" aria-label="Álbuns"></div>
+
+  <section class="reg-sel" id="regSel" aria-live="polite"></section>
+  <ul class="reg-mural" id="regMural" aria-label="Fotografias"></ul>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-brand">
+      <img src="/logo.webp" alt="" width="56" height="56" loading="lazy">
+      <span><strong>TUFEISEP</strong>Tuna Feminina do Instituto Superior de Engenharia do Porto · desde 1991</span>
+    </div>
+    <a class="edit-toggle" href="./">Voltar ao site</a>
+  </div>
+</footer>
+
+<!-- Fotografia em grande -->
+<dialog class="lb" id="lb" aria-label="Fotografia">
+  <figure class="lb-fig">
+    <img id="lbImg" alt="">
+    <figcaption id="lbCap"></figcaption>
+  </figure>
+  <button type="button" class="lb-btn lb-prev" data-lb="-1" aria-label="Fotografia anterior">‹</button>
+  <button type="button" class="lb-btn lb-next" data-lb="1" aria-label="Fotografia seguinte">›</button>
+  <button type="button" class="lb-btn lb-close" id="lbClose" aria-label="Fechar" autofocus>×</button>
+</dialog>
+
+<dialog id="dlg"><form id="form" class="form" method="dialog" novalidate></form></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module" src="/src/registos.js"></script>
+</body>
+</html>

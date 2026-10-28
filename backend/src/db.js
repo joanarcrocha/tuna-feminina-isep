@@ -65,6 +65,17 @@ db.exec(`
     criado   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS registos (
+    id           INTEGER PRIMARY KEY,
+    ficheiro     TEXT NOT NULL,
+    largura      INTEGER,
+    altura       INTEGER,
+    legenda      TEXT,
+    festival_id  INTEGER,
+    marco_id     INTEGER,
+    criado       TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS edicoes (
     id         INTEGER PRIMARY KEY,
     numero     INTEGER,

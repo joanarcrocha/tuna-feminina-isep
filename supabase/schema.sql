@@ -96,6 +96,18 @@ create table if not exists edicoes (
   criado     timestamptz not null default now()
 );
 
+-- Registos: fotografias de um festival ou de um marco.
+create table if not exists registos (
+  id          bigint generated always as identity primary key,
+  ficheiro    text not null,                                        -- imagem no armazenamento "fotos"
+  largura     int,                                                  -- para o mosaico não saltar enquanto carrega
+  altura      int,
+  legenda     text,
+  festival_id bigint references festivais (id) on delete set null,
+  marco_id    bigint references marcos (id) on delete set null,
+  criado      timestamptz not null default now()
+);
+
 -- ---------- Quem pode editar ----------
 -- Só as contas cujo email esteja nesta tabela podem alterar o arquivo.
 create table if not exists editores (email text primary key);
@@ -110,7 +122,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais', 'edicoes'] loop
+  foreach t in array array['info', 'marcos', 'carrossel', 'membros', 'fotos', 'festivais', 'edicoes', 'registos'] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "leitura publica" on %I', t);
     execute format('drop policy if exists "escrita editores" on %I', t);

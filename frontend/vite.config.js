@@ -7,11 +7,12 @@ export default defineConfig({
   // No GitHub Pages o site fica em /<nome-do-repositório>/; o workflow define BASE_PATH.
   base: process.env.BASE_PATH || '/',
   build: {
-    // Duas páginas: o site público e a área reservada.
+    // Três páginas: o site público, os registos (galeria) e a área reservada.
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         reservado: resolve(import.meta.dirname, 'reservado.html'),
+        registos: resolve(import.meta.dirname, 'registos.html'),
       },
     },
   },
