@@ -12,7 +12,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 
 const INSTRUMENTOS = ['Guitarra', 'Bandolim', 'Cavaquinho', 'Violino', 'Acordeão', 'Flauta transversal', 'Saxofone', 'Percussão', 'Estandarte', 'Pandeireta', 'Contra-baixo'];
 const NAIPES = ['Contralto', 'Mezzo', 'Soprano'];
-const INATIVA = 'Tunante Inativa';
+const INATIVA = 'Tunante Inativa';                          // valor guardado na base de dados
+// No site, as Tunantes Inativas chamam-se Velhinhas.
+const NOME_HIERARQUIA = { [INATIVA]: 'Velhinha' };
+const nomeHierarquia = e => NOME_HIERARQUIA[e] || e;
 const ESTADOS = ['Tunante', INATIVA, 'Caloira'];             // separadores da lista (a Veterana fica de fora até haver alguma)
 const MAGISTER = 'Magíster';                                 // uma só, e conta como Tunante
 const HIERARQUIAS = [MAGISTER, ...ESTADOS];                  // opções do formulário
@@ -218,13 +221,13 @@ addEventListener('resize', () => { clearTimeout(ajustarPilha.t); ajustarPilha.t 
 function renderMembros() {
   gerObserver?.disconnect();
   if (state.mFiltro !== ultimoFiltro) { ultimoFiltro = state.mFiltro; state.gerVistas = 1; }
-  // Tunantes Inativas: cartões pequenos, sem fotografia.
+  // Velhinhas: cartões pequenos, sem fotografia.
   $('#members').classList.toggle('compact', state.mFiltro === INATIVA);
   const counts = { Todas: state.membros.filter(daTuna).length };
   ESTADOS.forEach(e => counts[e] = state.membros.filter(m => inFilter(m, e)).length);
   const showCount = e => e !== CALOIRA || state.edit;
   $('#mFilter').innerHTML = ['Todas', ...ESTADOS].map(e =>
-    `<button class="pill" data-mf="${e}" aria-pressed="${state.mFiltro === e}">${e === 'Todas' ? 'Todas' : e === INATIVA ? 'Tunantes Inativas' : e + 's'}${showCount(e) ? `<small>${counts[e]}</small>` : ''}</button>`).join('') +
+    `<button class="pill" data-mf="${e}" aria-pressed="${state.mFiltro === e}">${e === 'Todas' ? 'Todas' : nomeHierarquia(e) + 's'}${showCount(e) ? `<small>${counts[e]}</small>` : ''}</button>`).join('') +
     `<input class="search" id="mSearch" type="search" placeholder="Procurar por nome ou instrumento" aria-label="Procurar membros" value="${esc(state.q)}">`;
 
   if (state.mFiltro === CALOIRA && !state.edit) {
@@ -239,7 +242,7 @@ function renderMembros() {
     .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
     .sort(porGeracao ? (a, b) => (b.geracao ?? -Infinity) - (a.geracao ?? -Infinity) || byOrder(a, b) : byOrder);
   visibleMembers = list;
-  // Tunantes Inativas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
+  // Velhinhas: divididas por geração (a mais recente primeiro); sem setas de ordem, a ordem é a da geração.
   const card = (m, i) => `
     <article class="mb reveal${isMagister(m) ? ' is-magister' : ''}${porGeracao ? ' compact' : ''}">
       ${porGeracao ? '' : `<div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>`}
@@ -265,7 +268,7 @@ function renderMembros() {
   // Cartões empilhados: cada um fica um pouco rodado e deslocado, e o seguinte desliza por cima do anterior.
   const cartaoGer = ({ g, ms }, i, novo) => `
     <section class="ger-card${novo ? ' novo' : ''}" style="--i:${i};--rot:${i % 2 ? .6 : -.6}deg;--dx:${i % 2 ? 6 : -6}px">
-      <h3 class="ger-title">${tituloGeracao(g)}<small>${ms.length} ${ms.length === 1 ? 'tunante' : 'tunantes'}</small></h3>
+      <h3 class="ger-title">${tituloGeracao(g)}<small>${ms.length} ${ms.length === 1 ? 'velhinha' : 'velhinhas'}</small></h3>
       <div class="ger-grid">${ms.map(m => card(m, 0)).join('')}</div>
     </section>`;
   const mostrarGeracoes = () => {
@@ -454,7 +457,7 @@ function openForm(kind, item) {
     let input;
     if (x.type === 'lines') input = `<textarea id="${id}" name="${x.k}"${req}>${esc((v[x.k] || []).join('\n'))}</textarea>`;
     else if (x.type === 'textarea') input = `<textarea id="${id}" name="${x.k}"${req}>${esc(val)}</textarea>`;
-    else if (x.type === 'select') input = `<select id="${id}" name="${x.k}"><option value="">—</option>${x.opts.map(o => `<option${o === val ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (x.type === 'select') input = `<select id="${id}" name="${x.k}"><option value="">—</option>${x.opts.map(o => `<option value="${o}"${o === val ? ' selected' : ''}>${nomeHierarquia(o)}</option>`).join('')}</select>`;
     else if (x.type === 'checks') return `<div class="field"><span class="lb">${x.l}</span><div class="checks">${x.opts.map((o, i) =>
         `<label for="${id}_${i}"><input type="checkbox" id="${id}_${i}" name="${x.k}" value="${o}"${(v[x.k] || []).includes(o) ? ' checked' : ''}>${o}</label>`).join('')}</div></div>`;
     else if (x.type === 'images') input = `<input type="file" id="${id}" name="${x.k}" multiple accept="image/jpeg,image/png,image/webp,image/gif">` +
