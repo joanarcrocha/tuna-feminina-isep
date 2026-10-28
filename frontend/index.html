@@ -147,8 +147,14 @@
         </div>
         <button class="add" data-add="edicoes">+ Adicionar edição</button>
       </div>
-      <ul class="mural" id="mural"></ul>
-      <div class="mural-mais" id="muralMais" hidden><button type="button" class="btn" id="muralMaisBtn">Mais edições <small></small></button></div>
+      <div class="quadro reveal">
+        <ul class="mural" id="mural" aria-label="Cartazes das edições"></ul>
+        <div class="mural-nav" id="muralNav" hidden>
+          <button type="button" class="mural-seta" data-mural="-1" aria-label="Edições mais recentes">‹</button>
+          <span id="muralPos" aria-live="polite"></span>
+          <button type="button" class="mural-seta" data-mural="1" aria-label="Edições mais antigas">›</button>
+        </div>
+      </div>
     </div>
   </section>
 </main>

@@ -502,11 +502,22 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 
 /* FE'TUFEISEP: mural de cartazes presos com fita-cola; cada um vira com o rato por cima */
 #fetufeisep[hidden] { display: none; }
-.mural { list-style: none; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: clamp(36px, 5vw, 56px) clamp(22px, 3.5vw, 40px);
-  padding: clamp(36px, 5vw, 56px) clamp(20px, 4vw, 48px); border-radius: var(--r); background: var(--blush);
-  background-image: radial-gradient(color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1.2px); background-size: 18px 18px; }
+/* o quadro mostra 4 cartazes (2 no telemóvel); os outros estão ao lado e chega-se lá com as setas ou a deslizar */
+.quadro { --por-quadro: 4; --gap: clamp(22px, 3.5vw, 40px); border-radius: var(--r); background: var(--blush);
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1.2px); background-size: 18px 18px; padding: 0 clamp(10px, 3vw, 38px) 20px; }
+.mural { list-style: none; margin: 0; display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - (var(--por-quadro) - 1) * var(--gap)) / var(--por-quadro)); gap: var(--gap);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
+  padding: clamp(40px, 5vw, 60px) 10px 28px; scroll-padding-inline: 10px; }
+.mural::-webkit-scrollbar { display: none; }
 .mural > .empty { grid-column: 1 / -1; background: var(--surface); }
-.poster-slot { display: grid; gap: 12px; justify-items: center; }
+.poster-slot { display: grid; gap: 12px; justify-items: center; align-content: start; scroll-snap-align: start; }
+.mural-nav { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.mural-nav[hidden] { display: none; }
+#muralPos { min-width: 7ch; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mural-seta { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); transition: transform .25s, opacity .25s; }
+.mural-seta:hover:not(:disabled) { transform: scale(1.08); }
+.mural-seta:disabled { opacity: .35; cursor: default; box-shadow: none; }
+@media (max-width: 720px) { .quadro { --por-quadro: 2; } }
 .poster { position: relative; width: 100%; aspect-ratio: 1 / 1.414; padding: 0; border: 0; background: none; cursor: pointer; perspective: 1400px; rotate: var(--rot);
   transition: rotate .5s cubic-bezier(.2, .8, .2, 1), translate .5s cubic-bezier(.2, .8, .2, 1); }
 /* a fita-cola fica no sítio enquanto o cartaz vira */
@@ -532,18 +543,6 @@ dialog[open] { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
 .poster:hover .poster-face { box-shadow: 0 4px 8px rgba(65, 50, 40, .1), 0 30px 50px -18px rgba(65, 50, 40, .45); }
 .poster:focus-visible { outline: none; }
 .poster:focus-visible .poster-face { outline: 2px solid var(--accent); outline-offset: 4px; }
-/* cartazes colados ao descer: caem de cima, assentam na parede e a fita-cola é posta por último */
-.poster-slot.novo .poster { animation: colar .75s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--j) * .14s); }
-.poster-slot.novo .poster::before { animation: fita .35s ease-out both; animation-delay: calc(var(--j) * .14s + .55s); }
-@keyframes colar {
-  from { opacity: 0; transform: translateY(-70px) scale(1.18) rotate(calc(var(--rot) * -3)); filter: drop-shadow(0 40px 30px rgba(65, 50, 40, .25)); }
-  55% { opacity: 1; transform: translateY(4px) scale(.98); filter: none; }
-}
-@keyframes fita { from { opacity: 0; scale: 1.5; } }
-.mural-mais { display: flex; justify-content: center; margin-top: 28px; }
-.mural-mais[hidden] { display: none; }
-.mural-mais .btn small { opacity: .6; margin-left: 6px; }
-
 /* sem rato (telemóvel), o cartaz não vira: um toque abre logo a ficha */
 @media (hover: none) { .poster:hover { rotate: var(--rot); translate: 0; } .poster:hover .poster-in { transform: none; } }
 
@@ -576,6 +575,5 @@ dialog.ed-dlg:not(:has(.ed-cartaz)) { width: min(620px, calc(100vw - 32px)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .poster, .poster-in { transition: none; }
-  .poster-slot.novo .poster, .poster-slot.novo .poster::before { animation: none; }
   dialog.ed-dlg[open] { animation: none; }
 }
