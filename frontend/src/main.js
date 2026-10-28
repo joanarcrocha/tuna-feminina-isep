@@ -41,6 +41,7 @@ const SCHEMAS = {
   ]},
   membros: { title: 'Membro', fields: [
     { k: 'nome', l: 'Nome', req: true },
+    { k: 'nome_tuna', l: 'Nome de tuna', hint: 'Por exemplo: Cardinalis Graciosus Pandeiretus. Aparece por baixo do nome.' },
     { k: 'estado', l: 'Hierarquia', type: 'select', opts: HIERARQUIAS, req: true, hint: 'Só pode haver uma Magíster. Ao escolher uma nova, a anterior passa a Tunante.' },
     { k: 'instrumentos', l: 'Instrumentos', type: 'checks', opts: INSTRUMENTOS },
     { k: 'naipe', l: 'Naipe de voz', type: 'select', opts: NAIPES },
@@ -305,7 +306,7 @@ function renderMembros() {
   const porGeracao = state.mFiltro === INATIVA;   // velhinhas: por geração, da mais recente para a mais antiga
   const list = state.membros
     .filter(m => inFilter(m, state.mFiltro))
-    .filter(m => !q || [m.nome, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
+    .filter(m => !q || [m.nome, m.nome_tuna, m.naipe, ...(m.instrumentos || [])].join(' ').toLowerCase().includes(q))
     .sort(porGeracao ? (a, b) => (b.geracao ?? -Infinity) - (a.geracao ?? -Infinity) || byOrder(a, b) : byOrder);
   visibleMembers = list;
   const card = (m, i) => `
@@ -313,6 +314,7 @@ function renderMembros() {
       <div class="mb-photo">${m.foto ? `<img src="${fileUrl(m.foto)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(initials(m))}</span>`}${isMagister(m) ? '<span class="badge">Magíster</span>' : ''}</div>
       <div class="mb-body">
         <h3 class="nt">${esc(m.nome)}</h3>
+        ${m.nome_tuna ? `<p class="nt-tuna">${esc(m.nome_tuna)}</p>` : ''}
         <dl class="mb-facts">
           <div><dt>${(m.instrumentos || []).length > 1 ? 'Instrumentos' : 'Instrumento'}</dt><dd>${esc((m.instrumentos || []).join(', ')) || '—'}</dd></div>
           <div><dt>Naipe</dt><dd>${esc(m.naipe) || '—'}</dd></div>

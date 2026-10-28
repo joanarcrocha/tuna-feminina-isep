@@ -119,6 +119,7 @@ if (!festivaisCols.has('lng')) db.exec('ALTER TABLE festivais ADD COLUMN lng REA
 
 if (!membrosCols.has('ordem')) db.exec('ALTER TABLE membros ADD COLUMN ordem INTEGER');
 if (!membrosCols.has('geracao')) db.exec('ALTER TABLE membros ADD COLUMN geracao INTEGER');
+if (!membrosCols.has('nome_tuna')) db.exec('ALTER TABLE membros ADD COLUMN nome_tuna TEXT');
 const marcosCols = new Set(db.prepare('PRAGMA table_info(marcos)').all().map(c => c.name));
 if (!marcosCols.has('data')) db.exec('ALTER TABLE marcos ADD COLUMN data TEXT');
 const registosCols = new Set(db.prepare('PRAGMA table_info(registos)').all().map(c => c.name));

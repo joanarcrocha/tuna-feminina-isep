@@ -199,6 +199,8 @@ body.editing .item-tools, .item-tools.on { display: flex; }
 .mb-photo span { font-family: var(--serif); font-style: italic; font-size: 64px; line-height: 1; }
 .mb-body { padding: 18px 20px 20px; display: grid; gap: 14px; align-content: start; }
 .mb .nt { font-size: 19px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+/* nome de tuna: por baixo da alcunha, mais discreto */
+.mb .nt-tuna { margin-top: -6px; font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.25; color: var(--muted); }
 .mb-facts { margin: 0; display: grid; gap: 8px; }
 .mb-facts div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .mb-facts dt { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }

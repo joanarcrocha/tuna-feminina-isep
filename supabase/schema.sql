@@ -31,6 +31,7 @@ create table if not exists membros (
   naipe         text check (naipe in ('Contralto', 'Mezzo', 'Soprano')),
   data_entrada  int,                         -- já não se usa: ver geracao
   geracao       int,
+  nome_tuna     text,                        -- ex.: Cardinalis Graciosus Pandeiretus
   foto          text,
   ordem         int,                         -- posição na lista do site
   criado        timestamptz not null default now()
