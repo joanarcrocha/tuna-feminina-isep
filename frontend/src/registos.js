@@ -13,7 +13,8 @@ const MAX_LADO = 2000;          // píxeis do lado maior depois de reduzir
 const QUALIDADE = 0.82;
 const TIPOS = { todos: 'Todos', f: 'Festivais', m: 'Marcos' };
 
-const state = { registos: [], festivais: [], marcos: [], tipo: 'todos', album: null, edit: false, lista: [], aberta: -1 };
+const state = { registos: [], festivais: [], marcos: [], tipo: 'todos', album: null, edit: false, lista: [], aberta: -1, semTabela: false };
+const SEM_TABELA = 'A base de dados ainda não tem a tabela dos registos. Corra o SQL da migração 014 no Supabase e tente outra vez.';
 
 /* ---------- álbuns ---------- */
 // Chave de cada álbum: "f12" (festival 12), "m3" (marco 3) ou "sem" (fotografias sem álbum).
@@ -259,8 +260,10 @@ function adicionar() {
   async (fd, progresso) => {
     const files = fd.getAll('fotos').filter(f => f?.size);
     if (!files.length) throw new Error('Escolha pelo menos uma fotografia.');
+    // Sem a tabela, não vale a pena enviar: as fotografias ficariam no armazenamento sem registo.
+    if (state.semTabela) throw new Error(SEM_TABELA);
     const base = { legenda: String(fd.get('legenda') || '').trim() || null, ...ligacao(fd.get('album')) };
-    let feitas = 0, falhas = 0;
+    let feitas = 0, falhas = 0, erro = '';
     for (const f of files) {
       progresso(`A enviar ${feitas + falhas + 1} de ${files.length}…`);
       try {
@@ -271,10 +274,12 @@ function adicionar() {
       } catch (ex) {
         if (ex?.status === 401) throw ex;
         falhas++;
+        erro ||= ex?.message || '';
       }
     }
     await carregar();
-    toast(falhas ? `${feitas} enviadas, ${falhas} falharam.` : `${feitas} ${feitas === 1 ? 'fotografia enviada' : 'fotografias enviadas'}.`);
+    if (falhas && !feitas) throw new Error(`Nenhuma fotografia foi enviada. ${erro}`.trim());
+    toast(falhas ? `${feitas} enviadas, ${falhas} falharam: ${erro}` : `${feitas} ${feitas === 1 ? 'fotografia enviada' : 'fotografias enviadas'}.`);
   });
 }
 
@@ -352,7 +357,7 @@ document.addEventListener('click', e => {
 async function carregar() {
   // Enquanto a tabela dos registos não existir no Supabase, a página mostra-se vazia.
   const [registos, festivais, marcos] = await Promise.all([
-    api.list('registos').catch(() => []),
+    api.list('registos').then(x => { state.semTabela = false; return x; }, () => { state.semTabela = true; return []; }),
     api.list('festivais').catch(() => []),
     api.list('marcos').catch(() => []),
   ]);
